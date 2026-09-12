@@ -1,0 +1,23 @@
+=== Sanity check: does the simulator reproduce the real red/blue finding? ===
+[separability check] red vs blue: correlation=0.985  condition_number=32.2
+  -> Likely to unmix badly, same failure mode as real red/blue. Not worth simulating a full dosing run until you pick a more distinct pair.
+
+=== Screening a hypothetical yellow dye against blue (before buying it) ===
+[separability check] yellow (HYPOTHETICAL -- not measured) vs blue: correlation=0.162  condition_number=2.1
+  -> Looks separable in principle -- worth simulating further, and worth actually testing on real hardware.
+
+=== Screening hypothetical yellow against red ===
+[separability check] yellow (HYPOTHETICAL -- not measured) vs red: correlation=0.257  condition_number=2.2
+  -> Looks separable in principle -- worth simulating further, and worth actually testing on real hardware.
+
+=== Simulated dosing run: red+blue, same schedule shape as your pseudorandom experiment ===
+
+  t(s)   true_red  true_blue   nnls_red  nnls_blue
+    60     0.0892     0.0000     0.0096     0.0481
+   240     0.0833     0.0818     0.1754     0.0375
+   420     0.1524     0.0769     0.2139     0.0475
+   600     0.1429     0.1415     0.1508     0.1392
+   780     0.1988     0.1333     0.1889     0.1406
+   960     0.1875     0.1864     0.1676     0.1981
+  1140     0.2342     0.1765     0.1946     0.2008
+  1260     0.2222     0.1667     0.1866     0.1931

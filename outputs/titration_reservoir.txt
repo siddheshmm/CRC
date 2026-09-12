@@ -1,0 +1,17 @@
+pH range over run: [3.08, 7.00]
+
+Predicted AS7341-band absorbance range per band (with realistic indicator concentrations phen=0.02, mo=0.015):
+  415nm: [0.0006, 0.0024]
+  445nm: [0.0026, 0.0074]
+  480nm: [0.0078, 0.0082]
+  515nm: [0.0022, 0.0097]
+  555nm: [0.0002, 0.0026]
+  590nm: [0.0000, 0.0002]
+  630nm: [0.0000, 0.0000]
+  680nm: [0.0000, 0.0000]
+
+Saved trace plot -> titration_reservoir_trace.png
+
+--- Readout closure test: recovering pH from 8-band AS7341 signal ---
+train RMSE (pH units): 0.2720
+test RMSE (pH units):  0.2983

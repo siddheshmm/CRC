@@ -1,0 +1,216 @@
+--- Calibration: red_dye (naive: logged times) ---
+  band(nm)          slope    intercept      R^2
+       415        0.00918      0.01838    0.846  <-- weak/nonlinear fit, check saturation or noise
+       445        0.07769      0.14705    0.838  <-- weak/nonlinear fit, check saturation or noise
+       480        0.09897      0.14535    0.810  <-- weak/nonlinear fit, check saturation or noise
+       515        0.11207      0.17215    0.815  <-- weak/nonlinear fit, check saturation or noise
+       555        0.10082      0.20811    0.864  <-- weak/nonlinear fit, check saturation or noise
+       590        0.06379      0.21946    0.865  <-- weak/nonlinear fit, check saturation or noise
+       630        0.05730      0.22639    0.843  <-- weak/nonlinear fit, check saturation or noise
+       680        0.03896      0.11481    0.870  <-- weak/nonlinear fit, check saturation or noise
+
+--- Auto step-detection (band=555nm) ---
+   dye          logged_time        detected_time  offset(s)  found?
+   red  2026-09-11 21:41:00  2026-09-11 21:41:00        0.0   False
+   red  2026-09-11 21:44:00  2026-09-11 21:44:00        0.0   False
+   red  2026-09-11 21:47:00  2026-09-11 21:47:00        0.0   False
+   red  2026-09-11 21:50:00 2026-09-11 21:50:58.936000       58.9    True
+   red  2026-09-11 21:53:00  2026-09-11 21:53:00        0.0   False
+   red  2026-09-11 21:56:00 2026-09-11 21:55:53.937000       -6.1    True
+2/6 pulses produced a detectable step at band 555nm.
+
+Excluded 4 pulse(s) with no detectable step from calibration: ['21:41', '21:44', '21:47', '21:53']
+
+--- Calibration: red_dye (auto-detected step times) ---
+  band(nm)          slope    intercept      R^2
+       415        0.00953      0.01886    0.986
+       445        0.08293      0.15096    0.987
+       480        0.10482      0.15049    0.974
+       515        0.12032      0.17787    0.980
+       555        0.10792      0.21274    1.000
+       590        0.07011      0.22202    0.974
+       630        0.06479      0.22842    0.943
+       680        0.04137      0.11650    0.992
+Saved calibration plot -> ./dye_analysis_output\red_dye_calibration_auto.png
+
+--- OD flatness check: red_dye (dyes absorb, shouldn't scatter) ---
+  od_a135_ch3: range=[0.07608, 0.37655]  pct_change=89.6%
+  od_a45_ch4: range=[0.02109, 0.23676]  pct_change=811.4%
+  od_a90_ch2: range=[0.00149, 0.17092]  pct_change=4539.6%
+
+--- Calibration: blue_dye (naive: logged times) ---
+  band(nm)          slope    intercept      R^2
+       415        0.02248      0.01373    0.247  <-- weak/nonlinear fit, check saturation or noise
+       445        0.22701      0.10128    0.311  <-- weak/nonlinear fit, check saturation or noise
+       480        0.25447      0.10131    0.386  <-- weak/nonlinear fit, check saturation or noise
+       515        0.28654      0.12042    0.357  <-- weak/nonlinear fit, check saturation or noise
+       555        0.28871      0.14658    0.288  <-- weak/nonlinear fit, check saturation or noise
+       590        0.20397      0.16567    0.149  <-- weak/nonlinear fit, check saturation or noise
+       630        0.18557      0.17391    0.119  <-- weak/nonlinear fit, check saturation or noise
+       680        0.11518      0.08847    0.180  <-- weak/nonlinear fit, check saturation or noise
+
+--- Auto step-detection (band=555nm) ---
+   dye          logged_time        detected_time  offset(s)  found?
+  blue  2026-09-11 22:13:00  2026-09-11 22:13:00        0.0   False
+  blue  2026-09-11 22:16:00 2026-09-11 22:16:18.961000       19.0    True
+  blue  2026-09-11 22:19:00  2026-09-11 22:19:00        0.0   False
+  blue  2026-09-11 22:22:00  2026-09-11 22:22:00        0.0   False
+  blue  2026-09-11 22:25:00  2026-09-11 22:25:00        0.0   False
+  blue  2026-09-11 22:28:00 2026-09-11 22:28:11.065000       11.1    True
+2/6 pulses produced a detectable step at band 555nm.
+
+Excluded 4 pulse(s) with no detectable step from calibration: ['22:13', '22:19', '22:22', '22:25']
+
+--- Calibration: blue_dye (auto-detected step times) ---
+  band(nm)          slope    intercept      R^2
+       415        0.01312      0.01605    0.779  <-- weak/nonlinear fit, check saturation or noise
+       445        0.14208      0.12274    0.909
+       480        0.18872      0.11159    0.821  <-- weak/nonlinear fit, check saturation or noise
+       515        0.21094      0.13233    0.768  <-- weak/nonlinear fit, check saturation or noise
+       555        0.20532      0.15887    0.632  <-- weak/nonlinear fit, check saturation or noise
+       590        0.12730      0.17542    0.269  <-- weak/nonlinear fit, check saturation or noise
+       630        0.13792      0.16882    0.164  <-- weak/nonlinear fit, check saturation or noise
+       680        0.09544      0.08636    0.291  <-- weak/nonlinear fit, check saturation or noise
+Saved calibration plot -> ./dye_analysis_output\blue_dye_calibration_auto.png
+
+--- OD flatness check: blue_dye (dyes absorb, shouldn't scatter) ---
+  od_a135_ch3: range=[0.07838, 0.48073]  pct_change=111.4%
+  od_a45_ch4: range=[0.01625, 3.62958]  pct_change=2195.4%
+  od_a90_ch2: range=[0.00161, 2.63983]  pct_change=3981.4%
+
+--- Mixed-dye unmixing recovery ---
+Empty DataFrame
+Columns: []
+Index: []
+
+--- Mixed-dye unmixing recovery ---
+               time after_pulse_of  known_red  recovered_red  known_blue  recovered_blue
+2026-09-12 01:05:20            red   0.166667       4.144953    0.000000       -3.259755
+2026-09-12 01:10:20           blue   0.153846       4.110166    0.076923       -3.251006
+
+--- Mixed-dye unmixing recovery ---
+               time after_pulse_of  known_red  recovered_red  known_blue  recovered_blue
+2026-09-12 01:25:20           blue   0.000000       2.508654    0.166667       -2.258982
+2026-09-12 01:30:20            red   0.076923       3.659590    0.153846       -2.942043
+
+--- Mixed-dye unmixing recovery ---
+               time after_pulse_of  known_red  recovered_red  known_blue  recovered_blue
+2026-09-12 00:33:20            red   0.090909       3.330341    0.000000       -2.509480
+2026-09-12 00:36:20           blue   0.083333       2.389439    0.083333       -2.106233
+2026-09-12 00:39:20            red   0.153846       2.381995    0.076923       -2.100117
+2026-09-12 00:45:20            red   0.200000       3.197613    0.133333       -2.390958
+2026-09-12 00:48:20           blue   0.187500       2.393843    0.187500       -2.115655
+2026-09-12 00:51:20            red   0.235294       4.213799    0.176471       -3.210377
+2026-09-12 00:54:20           blue   0.222222       3.855469    0.222222       -3.058318
+PS D:\Chemical RC> 
+
+--------------------------------------
+
+
+--- Calibration: red_dye (naive: logged times) ---
+  band(nm)          slope    intercept      R^2
+       415        0.00918      0.01838    0.846  <-- weak/nonlinear fit, check saturation or noise
+       445        0.07769      0.14705    0.838  <-- weak/nonlinear fit, check saturation or noise
+       480        0.09897      0.14535    0.810  <-- weak/nonlinear fit, check saturation or noise
+       515        0.11207      0.17215    0.815  <-- weak/nonlinear fit, check saturation or noise
+       555        0.10082      0.20811    0.864  <-- weak/nonlinear fit, check saturation or noise
+       590        0.06379      0.21946    0.865  <-- weak/nonlinear fit, check saturation or noise
+       630        0.05730      0.22639    0.843  <-- weak/nonlinear fit, check saturation or noise
+       680        0.03896      0.11481    0.870  <-- weak/nonlinear fit, check saturation or noise
+
+--- Auto step-detection (band=555nm) ---
+   dye          logged_time        detected_time  offset(s)  found?
+   red  2026-09-11 21:41:00  2026-09-11 21:41:00        0.0   False
+   red  2026-09-11 21:44:00  2026-09-11 21:44:00        0.0   False
+   red  2026-09-11 21:47:00  2026-09-11 21:47:00        0.0   False
+   red  2026-09-11 21:50:00 2026-09-11 21:50:58.936000       58.9    True
+   red  2026-09-11 21:53:00  2026-09-11 21:53:00        0.0   False
+   red  2026-09-11 21:56:00 2026-09-11 21:55:53.937000       -6.1    True
+2/6 pulses produced a detectable step at band 555nm.
+
+Excluded 4 pulse(s) with no detectable step from calibration: ['21:41', '21:44', '21:47', '21:53']
+
+--- Calibration: red_dye (auto-detected step times) ---
+  band(nm)          slope    intercept      R^2
+       415        0.00953      0.01886    0.986
+       445        0.08293      0.15096    0.987
+       480        0.10482      0.15049    0.974
+       515        0.12032      0.17787    0.980
+       555        0.10792      0.21274    1.000
+       590        0.07011      0.22202    0.974
+       630        0.06479      0.22842    0.943
+       680        0.04137      0.11650    0.992
+Saved calibration plot -> ./dye_analysis_output\red_dye_calibration_auto.png
+
+--- OD flatness check: red_dye (dyes absorb, shouldn't scatter) ---
+  od_a135_ch3: range=[0.07608, 0.37655]  pct_change=89.6%
+  od_a45_ch4: range=[0.02109, 0.23676]  pct_change=811.4%
+  od_a90_ch2: range=[0.00149, 0.17092]  pct_change=4539.6%
+
+--- Calibration: blue_dye (naive: logged times) ---
+  band(nm)          slope    intercept      R^2
+       415        0.02248      0.01373    0.247  <-- weak/nonlinear fit, check saturation or noise
+       445        0.22701      0.10128    0.311  <-- weak/nonlinear fit, check saturation or noise
+       480        0.25447      0.10131    0.386  <-- weak/nonlinear fit, check saturation or noise
+       515        0.28654      0.12042    0.357  <-- weak/nonlinear fit, check saturation or noise
+       555        0.28871      0.14658    0.288  <-- weak/nonlinear fit, check saturation or noise
+       590        0.20397      0.16567    0.149  <-- weak/nonlinear fit, check saturation or noise
+       630        0.18557      0.17391    0.119  <-- weak/nonlinear fit, check saturation or noise
+       680        0.11518      0.08847    0.180  <-- weak/nonlinear fit, check saturation or noise
+
+--- Auto step-detection (band=555nm) ---
+   dye          logged_time        detected_time  offset(s)  found?
+  blue  2026-09-11 22:13:00  2026-09-11 22:13:00        0.0   False
+  blue  2026-09-11 22:16:00 2026-09-11 22:16:18.961000       19.0    True
+  blue  2026-09-11 22:19:00  2026-09-11 22:19:00        0.0   False
+  blue  2026-09-11 22:22:00  2026-09-11 22:22:00        0.0   False
+  blue  2026-09-11 22:25:00  2026-09-11 22:25:00        0.0   False
+  blue  2026-09-11 22:28:00 2026-09-11 22:28:11.065000       11.1    True
+2/6 pulses produced a detectable step at band 555nm.
+
+Excluded 4 pulse(s) with no detectable step from calibration: ['22:13', '22:19', '22:22', '22:25']
+
+--- Calibration: blue_dye (auto-detected step times) ---
+  band(nm)          slope    intercept      R^2
+       415        0.01312      0.01605    0.779  <-- weak/nonlinear fit, check saturation or noise
+       445        0.14208      0.12274    0.909
+       480        0.18872      0.11159    0.821  <-- weak/nonlinear fit, check saturation or noise
+       515        0.21094      0.13233    0.768  <-- weak/nonlinear fit, check saturation or noise
+       555        0.20532      0.15887    0.632  <-- weak/nonlinear fit, check saturation or noise
+       590        0.12730      0.17542    0.269  <-- weak/nonlinear fit, check saturation or noise
+       630        0.13792      0.16882    0.164  <-- weak/nonlinear fit, check saturation or noise
+       680        0.09544      0.08636    0.291  <-- weak/nonlinear fit, check saturation or noise
+Saved calibration plot -> ./dye_analysis_output\blue_dye_calibration_auto.png
+
+--- OD flatness check: blue_dye (dyes absorb, shouldn't scatter) ---
+  od_a135_ch3: range=[0.07838, 0.48073]  pct_change=111.4%
+  od_a45_ch4: range=[0.01625, 3.62958]  pct_change=2195.4%
+  od_a90_ch2: range=[0.00161, 2.63983]  pct_change=3981.4%
+WARNING: no data in the intended baseline window (45s before first pulse) -- logging likely started too close to dosing. Falling back to the earliest available readings in this file as the baseline instead. Treat this baseline as less reliable than a proper pre-dose blank.
+WARNING: logging actually starts at 2026-09-11 23:37:25.475000, which is AFTER the first pulse at 2026-09-11 23:30:00 -- there is no true pre-dose data in this file at all. This fallback baseline already includes dye and will bias every recovered concentration. Fix the pulse schedule's date/time, or start logging before dosing next time.
+
+--- Mixed-dye unmixing recovery ---
+Empty DataFrame
+Columns: []
+Index: []
+
+--- Mixed-dye unmixing recovery ---
+               time after_pulse_of  known_red  recovered_red  known_blue  recovered_blue
+2026-09-12 01:05:20            red   0.166667       0.002296    0.000000       -0.001411
+2026-09-12 01:10:20           blue   0.153846      -0.032491    0.076923        0.007338
+
+--- Mixed-dye unmixing recovery ---
+               time after_pulse_of  known_red  recovered_red  known_blue  recovered_blue
+2026-09-12 01:25:20           blue   0.000000       0.534936    0.166667       -0.316703
+2026-09-12 01:30:20            red   0.076923       1.685873    0.153846       -0.999764
+
+--- Mixed-dye unmixing recovery ---
+               time after_pulse_of  known_red  recovered_red  known_blue  recovered_blue
+2026-09-12 00:33:20            red   0.090909      -0.017900    0.000000        0.012766
+2026-09-12 00:36:20           blue   0.083333      -0.958802    0.083333        0.416013
+2026-09-12 00:39:20            red   0.153846      -0.966246    0.076923        0.422129
+2026-09-12 00:45:20            red   0.200000      -0.150627    0.133333        0.131288
+2026-09-12 00:48:20           blue   0.187500      -0.954398    0.187500        0.406590
+2026-09-12 00:51:20            red   0.235294       0.865558    0.176471       -0.688131
+2026-09-12 00:54:20           blue   0.222222       0.507229    0.222222       -0.536072
+PS D:\Chemical RC> 

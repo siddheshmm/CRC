@@ -1,0 +1,6 @@
+experiment,pioreactor_unit,timestamp,co2_reading_ppm,temperature_c,relative_humidity,timestamp_localtime,hours_since_experiment_created
+Pulse experiments,pioreactor01,2026-09-11T17:52:32.288Z,732.0,,,2026-09-11 23:37:32.288,1783.514722222222
+Pulse experiments,pioreactor01,2026-09-11T17:53:02.287Z,736.0,31.43,64.09,2026-09-11 23:38:02.287,1783.523055555556
+Pulse experiments,pioreactor01,2026-09-11T17:53:32.288Z,745.0,31.28,64.51,2026-09-11 23:38:32.288,1783.531388888889
+Pulse experiments,pioreactor01,2026-09-11T17:54:02.288Z,747.0,31.21,64.81,2026-09-11 23:39:02.288,1783.539722222222
+Pulse experiments,pioreactor01,2026-09-11T17:54:32.296Z,757.0,31.15,64.97,2026-09-11 23:39:32.296,1783.548055555555

@@ -1,0 +1,45 @@
+experiment,pioreactor_unit,timestamp,message,source,level,task,timestamp_localtime,hours_since_experiment_created
+Pulse experiments,pioreactor01,2026-09-14T16:56:00.530Z,Updated current_volume_ml from 10.734111894799977 mL to 10.0 mL.,ui,INFO,bioreactor,2026-09-14 22:41:00.530,1854.5725
+Pulse experiments,pioreactor01,2026-09-14T16:56:03.503Z,Updated efflux_tube_volume_ml from 10.0 mL to 10.0 mL.,ui,INFO,bioreactor,2026-09-14 22:41:03.503,1854.573333333333
+Pulse experiments,pioreactor01,2026-09-14T16:56:06.546Z,Init.,app,DEBUG,stirring,2026-09-14 22:41:06.546,1854.574166666667
+Pulse experiments,pioreactor01,2026-09-14T16:56:06.611Z,Operating with RPM feedback loop.,app,DEBUG,stirring,2026-09-14 22:41:06.611,1854.574166666667
+Pulse experiments,pioreactor01,2026-09-14T16:56:06.623Z,"Initialized GPIO-17 using software-timing, initial frequency = 200.0 hz.",app,DEBUG,stirring,2026-09-14 22:41:06.623,1854.574166666667
+Pulse experiments,pioreactor01,2026-09-14T16:56:06.676Z,Dodging disabled; running continuously.,app,DEBUG,stirring,2026-09-14 22:41:06.676,1854.574166666667
+Pulse experiments,pioreactor01,2026-09-14T16:56:06.679Z,Starting initialize_continuous_operation,app,DEBUG,stirring,2026-09-14 22:41:06.679,1854.574166666667
+Pulse experiments,pioreactor01,2026-09-14T16:56:07.237Z,Finished initialize_continuous_operation,app,DEBUG,stirring,2026-09-14 22:41:07.237,1854.574444444444
+Pulse experiments,pioreactor01,2026-09-14T16:56:07.288Z,Ready.,app,INFO,stirring,2026-09-14 22:41:07.288,1854.574444444444
+Pulse experiments,pioreactor01,2026-09-14T16:56:07.290Z,stirring is blocking until RPM is near 500.0.,app,DEBUG,stirring,2026-09-14 22:41:07.290,1854.574444444444
+Pulse experiments,pioreactor01,2026-09-14T16:56:14.314Z,"Stirring RPM is 0 - attempting to restart it automatically. It may be a temporary stall, target RPM may be too low, insufficient power applied to fan, or not reading sensor correctly.",app,WARNING,stirring,2026-09-14 22:41:14.314,1854.576388888889
+Pulse experiments,pioreactor01,2026-09-14T16:56:14.320Z,Kicking stirring,app,DEBUG,stirring,2026-09-14 22:41:14.320,1854.576388888889
+Pulse experiments,pioreactor01,2026-09-14T16:56:19.444Z,"Stirring RPM is 0 - attempting to restart it automatically. It may be a temporary stall, target RPM may be too low, insufficient power applied to fan, or not reading sensor correctly.",app,WARNING,stirring,2026-09-14 22:41:19.444,1854.577777777778
+Pulse experiments,pioreactor01,2026-09-14T16:56:19.450Z,Kicking stirring,app,DEBUG,stirring,2026-09-14 22:41:19.450,1854.577777777778
+Pulse experiments,pioreactor01,2026-09-14T16:56:31.159Z,Init.,app,DEBUG,od_reading,2026-09-14 22:41:31.159,1854.581111111111
+Pulse experiments,pioreactor01,2026-09-14T16:56:31.167Z,OD setup: calibrations=none; estimator=od-fused-estimator-2026-04-03.,app,DEBUG,od_reading,2026-09-14 22:41:31.167,1854.581111111111
+Pulse experiments,pioreactor01,2026-09-14T16:56:31.685Z,"ADC offsets: {'2': 0.0, '3': 7.999999051953124, '4': 53.89473921289063, '1': 29.052630157031253}, and in voltage: {'2': 0.0, '3': 6.25019e-05, '4': 0.00042106550000000004, '1': 0.00022698060000000004}",app,DEBUG,od_reading,2026-09-14 22:41:31.685,1854.581111111111
+Pulse experiments,pioreactor01,2026-09-14T16:56:31.970Z,Setting ADC class ADS1114_ADC for pd2 with initial gain 16.0.,app,DEBUG,od_reading,2026-09-14 22:41:31.970,1854.581111111111
+Pulse experiments,pioreactor01,2026-09-14T16:56:31.972Z,Setting ADC class ADS1114_ADC for pd3 with initial gain 4.0.,app,DEBUG,od_reading,2026-09-14 22:41:31.972,1854.581111111111
+Pulse experiments,pioreactor01,2026-09-14T16:56:31.975Z,Setting ADC class ADS1114_ADC for pd4 with initial gain 16.0.,app,DEBUG,od_reading,2026-09-14 22:41:31.975,1854.581111111111
+Pulse experiments,pioreactor01,2026-09-14T16:56:31.978Z,Setting ADC class ADS1114_ADC for pd1 with initial gain 2.0.,app,DEBUG,od_reading,2026-09-14 22:41:31.978,1854.581111111111
+Pulse experiments,pioreactor01,2026-09-14T16:56:32.016Z,"Starting od_reading with PD channels {'2': '90', '3': '135', '4': '45'}, with IR LED intensity 80.0% from channel A every 5.0 seconds.",app,DEBUG,od_reading,2026-09-14 22:41:32.016,1854.581388888889
+Pulse experiments,pioreactor01,2026-09-14T16:56:32.066Z,Ready.,app,INFO,od_reading,2026-09-14 22:41:32.066,1854.581388888889
+Pulse experiments,pioreactor01,2026-09-14T16:56:32.069Z,od_reading is blocking until disconnected.,app,DEBUG,od_reading,2026-09-14 22:41:32.069,1854.581388888889
+Pulse experiments,pioreactor01,2026-09-14T16:56:34.896Z,Init.,spectrometer_reading_plugin,DEBUG,spectrometer_reading,2026-09-14 22:41:34.896,1854.581944444444
+Pulse experiments,pioreactor01,2026-09-14T16:56:34.980Z,Dodging enabled.,spectrometer_reading_plugin,DEBUG,spectrometer_reading,2026-09-14 22:41:34.980,1854.581944444444
+Pulse experiments,pioreactor01,2026-09-14T16:56:35.026Z,Ready.,spectrometer_reading_plugin,INFO,spectrometer_reading,2026-09-14 22:41:35.026,1854.582222222222
+Pulse experiments,pioreactor01,2026-09-14T16:56:35.028Z,spectrometer_reading is blocking until disconnected.,spectrometer_reading_plugin,DEBUG,spectrometer_reading,2026-09-14 22:41:35.028,1854.582222222222
+Pulse experiments,pioreactor01,2026-09-14T16:56:39.289Z,"Setup done, self._background_noise=[0.0, 0.0, 0.0, 9.765625e-05, 0.00015625, 5.859375e-05, 5.859375e-05, 0.0]",spectrometer_reading_plugin,DEBUG,spectrometer_reading,2026-09-14 22:41:39.289,1854.583333333333
+Pulse experiments,pioreactor01,2026-09-14T16:56:49.281Z,stirring is blocking until disconnected.,app,DEBUG,stirring,2026-09-14 22:41:49.281,1854.586111111111
+Pulse experiments,pioreactor01,2026-09-14T17:07:16.593Z,Running waste_pump continuously.,app,INFO,remove_waste,2026-09-14 22:52:16.593,1854.760277777778
+Pulse experiments,pioreactor01,2026-09-14T17:07:16.706Z,"Initialized GPIO-12 using hardware-timing, initial frequency = 250.0 hz.",app,DEBUG,remove_waste,2026-09-14 22:52:16.706,1854.760277777778
+Pulse experiments,pioreactor01,2026-09-14T17:07:27.313Z,Adding media for 3600.0s.,app,INFO,add_media,2026-09-14 22:52:27.313,1854.763333333333
+Pulse experiments,pioreactor01,2026-09-14T17:07:27.382Z,"Initialized GPIO-13 using hardware-timing, initial frequency = 250.0 hz.",app,DEBUG,add_media,2026-09-14 22:52:27.382,1854.763333333333
+Pulse experiments,pioreactor01,2026-09-14T17:08:18.255Z,Fused OD estimate hit estimator bounds: estimator=od-fused-estimator-2026-04-03 min_logc=-1.3010299956639813 max_logc=0.47712125471966244 od_fused=2.9999999999999996,app,WARNING,od_reading,2026-09-14 22:53:18.255,1854.7775
+Pulse experiments,pioreactor01,2026-09-14T17:10:11.775Z,Adding 0.5 mL alt-media.,app,INFO,add_alt_media,2026-09-14 22:55:11.775,1854.808888888889
+Pulse experiments,pioreactor01,2026-09-14T17:10:11.822Z,"Initialized GPIO-16 using software-timing, initial frequency = 250.0 hz.",app,DEBUG,add_alt_media,2026-09-14 22:55:11.822,1854.808888888889
+Pulse experiments,pioreactor01,2026-09-14T17:10:13.207Z,Cleaned up GPIO-16.,app,DEBUG,add_alt_media,2026-09-14 22:55:13.207,1854.809444444444
+Pulse experiments,pioreactor01,2026-09-14T17:18:49.333Z,Adding 1.0 mL alt-media.,app,INFO,add_alt_media,2026-09-14 23:03:49.333,1854.952777777778
+Pulse experiments,pioreactor01,2026-09-14T17:18:49.400Z,"Initialized GPIO-16 using software-timing, initial frequency = 250.0 hz.",app,DEBUG,add_alt_media,2026-09-14 23:03:49.400,1854.952777777778
+Pulse experiments,pioreactor01,2026-09-14T17:18:52.028Z,Cleaned up GPIO-16.,app,DEBUG,add_alt_media,2026-09-14 23:03:52.028,1854.953611111111
+Pulse experiments,pioreactor01,2026-09-14T17:30:08.120Z,Adding 2.0 mL alt-media.,app,INFO,add_alt_media,2026-09-14 23:15:08.120,1855.141388888889
+Pulse experiments,pioreactor01,2026-09-14T17:30:08.183Z,"Initialized GPIO-16 using software-timing, initial frequency = 250.0 hz.",app,DEBUG,add_alt_media,2026-09-14 23:15:08.183,1855.141388888889
+Pulse experiments,pioreactor01,2026-09-14T17:30:13.296Z,Cleaned up GPIO-16.,app,DEBUG,add_alt_media,2026-09-14 23:15:13.296,1855.142777777778

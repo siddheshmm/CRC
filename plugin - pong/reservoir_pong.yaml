@@ -1,0 +1,34 @@
+---
+display_name: Reservoir Pong
+
+automation_name: reservoir_pong
+
+source: reservoir_pong
+
+description: >
+  Closed-loop lane pong on the dye reservoir. A zigzag ball sets each alt_media dye dose; a frozen
+  ridge readout of the AS7341 scan (taken shortly after the dose) predicts the ball's next lane and
+  moves the paddle. Without a model file it only collects data. Touches ONLY the alt_media pump.
+
+fields:
+  - key: levels
+    unit: mL
+    label: "Dose per lane in mL, lowest lane first"
+    default: "0.1,0.3,0.5"
+    type: string
+
+  - key: duration
+    unit: min
+    label: "Minutes between dose starts (0.545 matches the earlier 32.7 s runs)"
+    default: 0.5
+
+  - key: max_cycles
+    unit: cycles
+    label: "Slots to play"
+    default: 250
+
+  - key: model_path
+    unit: null
+    label: "Frozen readout JSON from fit_pong_readout.py (empty = collect only)"
+    default: ""
+    type: string

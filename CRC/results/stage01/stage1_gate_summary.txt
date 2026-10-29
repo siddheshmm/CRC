@@ -1,0 +1,7 @@
+STAGE 1 GATE SUMMARY  (stage1_baseline/baseline, started 2026-10-27T05:09:17.612Z)
+
+[PASS] in window >= 30 min continuous (1.47-1.51)  -  63.0 min; 99.3% of readings
+[PASS] |drift| <= 0.2 %/10 min (stage gate)  -  -0.025 ± 0.006 (95% CI)
+[PASS] |drift| <= 0.05 %/10 min (10 h run guideline)  -  -0.025; CI stays within the limit
+[FAIL] recent drift (last 20 min) <= 0.05 %/10 min (not accelerating)  -  -0.060 ± 0.029 (95% CI); curvature p = 6e-07
+[PASS] noise SD per cycle <= 0.003 (design sigma)  -  median 0.0017, worst bin 0.0021

@@ -1,0 +1,32 @@
+{
+  "script": "pio_ratio_monitor.py",
+  "script_version": "1.0",
+  "script_sha256": "56ea1efbcb30158b374d2c402b5600fec1e5d2b4f174d74a83db9238384d45a8",
+  "argv": [
+    "pio_ratio_monitor.py",
+    "--stage",
+    "stage1_baseline",
+    "--label",
+    "baseline",
+    "--match",
+    "spectrometer_reading"
+  ],
+  "stage": "stage1_baseline",
+  "label": "baseline",
+  "notes": "",
+  "extra": {},
+  "started_utc": "2026-10-27T05:09:17.612Z",
+  "ended_utc": "2026-10-27T06:12:23.727Z",
+  "host": "siddhant-Aspire-E5-576",
+  "operator": "siddhant",
+  "python": "3.14.4",
+  "numpy": "2.3.5",
+  "paho_mqtt": "2.1.0",
+  "source": {
+    "mode": "live",
+    "broker": "pioreactor.local:1883",
+    "topic_filter": "pioreactor/+/+/#",
+    "match": "spectrometer_reading"
+  },
+  "n_events": 0
+}

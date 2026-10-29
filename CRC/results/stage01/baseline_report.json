@@ -1,0 +1,130 @@
+{
+  "run": "stage1_baseline/baseline",
+  "stage1_long": {
+    "feature": "555/480",
+    "n_cycles": 757,
+    "duration_min": 63.00016666666667,
+    "settle_min": 0,
+    "median_all": 1.474004,
+    "first_5min_median": 1.4750745,
+    "last_5min_median": 1.472089,
+    "noise_sd_median_of_5min_bins": 0.0016972086311661495,
+    "fraction_in_window": 0.9933949801849405,
+    "minutes_in_window_total": 62.666666666666664,
+    "longest_continuous_in_window_min": 63.00016666666667,
+    "noise_sd_max_5min_bin": 0.002115726607767079,
+    "drift_windows": [
+      {
+        "window_min": 10.0,
+        "pct_per_10min": -0.10923676246316828,
+        "se": 0.03380129132011621,
+        "p": 0.010294027358357676
+      },
+      {
+        "window_min": 20.0,
+        "pct_per_10min": -0.05993700661848709,
+        "se": 0.014735721168048659,
+        "p": 0.000656775778307477
+      },
+      {
+        "window_min": 30.0,
+        "pct_per_10min": -0.04892609811904463,
+        "se": 0.007787416044130798,
+        "p": 7.355613408995738e-07
+      },
+      {
+        "window_min": 45.0,
+        "pct_per_10min": -0.04296056380630504,
+        "se": 0.003985746610378896,
+        "p": 6.29110444082499e-14
+      },
+      {
+        "window_min": 63.00016666666667,
+        "pct_per_10min": -0.025479163339160473,
+        "se": 0.0029489679526782755,
+        "p": 3.0906526439465294e-12
+      }
+    ],
+    "drift_full": {
+      "pct_per_10min": -0.025479163339160473,
+      "se": 0.0029489679526782755,
+      "p": 3.0906526439465294e-12
+    },
+    "curvature": {
+      "quadratic_coef_per_min2": -1.2045830554642193e-06,
+      "F": 31.122228546429824,
+      "p": 5.887975017548897e-07
+    },
+    "projection_from_end_of_run": {
+      "y_end_fit": 1.4729796346382917,
+      "minutes_to_lower_edge_central": 79.33008915594891,
+      "minutes_to_lower_edge_worst95": 64.66134916098453,
+      "ratio_after_10h_central": 1.4504436611886642,
+      "ratio_after_10h_worst95": 1.4453312665455675,
+      "note": "straight-line extrapolation of this run; drift may slow (see curvature / between-run drift)",
+      "recent20_pct_per_10min": -0.05993700661848709,
+      "minutes_to_lower_edge_recent_central": 33.72259356757962,
+      "minutes_to_lower_edge_recent_worst95": 22.756739619486588,
+      "ratio_after_10h_recent_central": 1.4199653022918675
+    },
+    "gates": [
+      {
+        "criterion": "in window >= 30 min continuous (1.47-1.51)",
+        "passed": true,
+        "detail": "63.0 min; 99.3% of readings"
+      },
+      {
+        "criterion": "|drift| <= 0.2 %/10 min (stage gate)",
+        "passed": true,
+        "detail": "-0.025 \u00b1 0.006 (95% CI)"
+      },
+      {
+        "criterion": "|drift| <= 0.05 %/10 min (10 h run guideline)",
+        "passed": true,
+        "detail": "-0.025; CI stays within the limit"
+      },
+      {
+        "criterion": "recent drift (last 20 min) <= 0.05 %/10 min (not accelerating)",
+        "passed": false,
+        "detail": "-0.060 \u00b1 0.029 (95% CI); curvature p = 6e-07"
+      },
+      {
+        "criterion": "noise SD per cycle <= 0.003 (design sigma)",
+        "passed": true,
+        "detail": "median 0.0017, worst bin 0.0021"
+      }
+    ],
+    "hydraulics": {
+      "q_runs_mL_per_min": [
+        4.1,
+        3.9
+      ],
+      "Q_mean": 4.0,
+      "Q_sd": 0.1414213562373093,
+      "volume_mL": 10.0,
+      "tau_from_V_over_Q_min": 2.5,
+      "tau_step_fit_min": 1.99,
+      "effective_mixed_volume_mL": 7.96,
+      "effective_volume_fraction": 0.796,
+      "step_s_tau_over_3": [
+        50.0,
+        39.8
+      ]
+    },
+    "carrier_budget_L": {
+      "main_run": 1.8,
+      "steps": 600,
+      "step_s": 45,
+      "stage2_blockA_48tau": 0.48
+    },
+    "between_runs": {
+      "prev_run": "stage1_baseline/baseline",
+      "prev_end_median": 1.4859855,
+      "this_start_median": 1.4750745,
+      "gap_hours": 11.358369722222223,
+      "change": -0.010910999999999893,
+      "avg_pct_per_10min": -0.010774142929251558,
+      "note": "only meaningful if the same carrier bottle and vial setup were used"
+    }
+  }
+}

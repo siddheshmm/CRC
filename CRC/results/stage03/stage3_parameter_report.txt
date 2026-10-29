@@ -1,0 +1,46 @@
+STAGE 3: BENCHMARK PARAMETER SELECTION REPORT
+===========================================================================
+
+1. RULE 1: MAXIMUM PULSE VOLUME (v_max)
+---------------------------------------------------------------------------
+  - Acid 80% Overshoot Target dF:  0.0173 (overshoot: 0.0216)
+  - Base 80% Overshoot Target dF:  0.0079 (overshoot: 0.0098)
+  - Linear Calibration Gains:      Acid = 0.0649 ratio/mL, Base = 0.1782 ratio/mL
+  - Asymmetry Factor (Base/Acid):  2.75x (Base is ~2.7x more potent)
+  - Selected v_max (Scaled):
+      Acid v_max = 0.20 mL (200 uL) -> Expected peak dF = 0.0130
+      Base v_max = 0.08 mL (80 uL)  -> Expected peak dF = 0.0143
+      -> Delivers balanced bipolar excursions (|dF| ~ 0.013 - 0.014) staying safely inside [1.40, 1.58].
+
+2. RULE 2: LEVEL SIZE & NOISE MARGIN (dv)
+---------------------------------------------------------------------------
+  - Discretization: 9 levels (-4, -3, -2, -1, 0, 1, 2, 3, 4)
+  - Acid Level Step (dv_acid):     50.0 uL (0.0500 mL) -> Step dF = 0.0032
+  - Base Level Step (dv_base):     20.0 uL (0.0200 mL) -> Step dF = 0.0036
+  - Baseline Noise Floor (sigma0): 0.0020 ratio units (5-sigma = 0.0100)
+  - Peak excursions at +/-4:       ~1.4x the 5-sigma noise threshold, ensuring high signal-to-noise ratio.
+
+3. RULE 3: HYDRAULIC MIXING CHECK
+---------------------------------------------------------------------------
+  - Hydraulic Residence Time (V/Q): V = 10 mL, Q = 3.33 mL/min -> tau = 3.00 min
+  - Measured Washout Decay Tau:     Median tau = 3.0 min (within 10% of theoretical CSTR mixing).
+  - Pass: System behaves as an ideal continuous stirred tank reactor.
+
+4. RULE 4: STEP LENGTH (T_s)
+---------------------------------------------------------------------------
+  - Selected Step Length T_s:       T_s = tau / 3 = 60 seconds (1.0 minute)
+  - Firing Schedule:                Step k fires at t0 + k * 60 seconds.
+
+5. STAGE 4 BENCHMARK EXECUTION LOGISTICS
+---------------------------------------------------------------------------
+  - Sequence File:                  stage4_sequence_600steps.csv (Seed = 42)
+  - Total Sequence Length:          N = 600 steps
+      * Washout / Warmup:           Steps 0 to 29 (30 steps, all level 0 = 30 min)
+      * Training Segment:           Steps 30 to 429 (400 steps = 6.67 hours)
+      * Testing Segment:            Steps 430 to 599 (170 steps = 2.83 hours)
+  - Total Run Duration:             10.67 hours (including 20 min pre/post baselines)
+  - Reagent Inventory Required:
+      * Acid Stock (Vinegar):       31.85 mL (recommend preparing >= 25 mL)
+      * Base Stock (Ammonia 1:150): 12.56 mL (recommend preparing >= 20 mL)
+      * Carrier Buffer (MO 13%):    2.13 Liters (prepare 2.5 - 3.0 L in carboy)
+===========================================================================

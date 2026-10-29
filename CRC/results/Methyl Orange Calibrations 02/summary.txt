@@ -1,0 +1,55 @@
+Loaded 956 AS7341 cycles and 962 OD cycles  (17:16:24 – 18:35:59 Nepal time)
+Clock check: timestamp_localtime - UTC = 0 days 05:45:00  (expect 5:45:00 = Nepal time)
+
+Analysis windows (mode=auto_stable, length=3 min):
+  A Distilled water                    recorded 17:20:00–17:30:00  ->  17:24:34–17:27:29  (36 spectrometer cycles)
+  B Diluted vinegar                    recorded 17:55:00–18:05:00  ->  17:58:39–18:01:34  (36 spectrometer cycles)
+  C Diluted baking soda                recorded 18:25:00–18:35:00  ->  18:31:29–18:34:24  (36 spectrometer cycles)
+  D Vinegar + baking soda              recorded 17:35:00–17:45:00  ->  17:39:59–17:42:54  (36 spectrometer cycles)
+  E Methyl orange 5 mL + water 5 mL    recorded 18:10:00–18:20:00  ->  18:15:09–18:18:04  (36 spectrometer cycles)
+  outliers removed (MAD filter): A:1, B:0, C:0, D:3, E:0
+
+Mean ± SD per band (analysis window, raw units)
+channel          415 nm            445 nm            480 nm            515 nm            555 nm            590 nm            630 nm            680 nm
+sample                                                                                                                                               
+A        0.0216 ± 3e-05  0.1807 ± 0.00019  0.1971 ± 0.00027  0.2254 ± 0.00028  0.2598 ± 0.00027  0.2559 ± 0.00023  0.2664 ± 0.00026  0.1405 ± 0.00019
+B        0.0181 ± 3e-05  0.1398 ± 0.00011    0.1454 ± 6e-05    0.1678 ± 8e-05  0.2107 ± 0.00015  0.2428 ± 0.00025  0.2571 ± 0.00024  0.1333 ± 0.00021
+C        0.0184 ± 3e-05    0.1376 ± 7e-05   0.1455 ± 0.0001  0.1858 ± 0.00011  0.2406 ± 0.00025  0.2462 ± 0.00021  0.2548 ± 0.00025  0.1315 ± 0.00016
+D        0.0184 ± 3e-05    0.1369 ± 9e-05    0.1451 ± 9e-05  0.1843 ± 0.00017   0.239 ± 0.00051   0.243 ± 0.00069   0.2514 ± 0.0007  0.1303 ± 0.00071
+E        0.0171 ± 3e-05    0.1315 ± 8e-05    0.1383 ± 6e-05    0.1616 ± 6e-05   0.1952 ± 0.0001  0.2308 ± 0.00024  0.2488 ± 0.00029  0.1296 ± 0.00023
+
+CV % per channel
+channel  415 nm  445 nm  480 nm  515 nm  555 nm  590 nm  630 nm  680 nm  OD 45°  OD 90°  OD 135°
+sample                                                                                          
+A         0.147   0.102   0.138   0.124   0.104   0.090   0.097   0.132   0.048     NaN    1.065
+B         0.164   0.077   0.044   0.045   0.073   0.102   0.092   0.157   0.067     NaN    1.201
+C         0.139   0.051   0.067   0.059   0.103   0.086   0.098   0.124   0.101     NaN    1.129
+D         0.169   0.064   0.061   0.092   0.214   0.284   0.277   0.545   0.085     NaN    2.194
+E         0.149   0.061   0.045   0.035   0.053   0.103   0.118   0.177   0.080     NaN    1.630
+
+QC – overall brightness (sum of 8 bands) relative to median sample:
+  A: 1.15, B: 0.98, C: 1.01, D: 1.00, E: 0.93
+  ! sample A is +15% brighter/dimmer than the median sample – check vial/position/LED setup; use ref-normalised features
+  ! OD channel(s) ['OD 90°'] are constant (all zeros) in every window – no usable signal; excluded from fits
+
+Making figures ...
+
+Calibration (linear, signal = a + b·pH; x = pH-strip midpoint)
+  samples: ['A', 'B', 'C', 'D', 'E']   pH x-values: [5.5, 3.5, 10.0, 9.5, 5.5]   (strip uncertainty ±[0.5, 0.5, 0.5, 0.5, 0.5])
+
+  Top 8 features by R²  (exploratory: ~30 candidate features, n = 5  ->  expect optimistic R²)
+feature      group     r2  spearman  loo_rmse_pH  p_value
+515/445 band ratio 0.9851    0.9747       0.4806   0.0008
+OD 135°         OD 0.9798    0.8721       0.6613   0.0012
+515/480 band ratio 0.9065    0.8208       1.2852   0.0125
+555/415 band ratio 0.8589    0.8208       1.6011   0.0235
+555/445 band ratio 0.8205    0.6669       1.8263   0.0342
+555/480 band ratio 0.7040    0.6669       2.5298   0.0756
+590/680   band/ref 0.6374    0.8208       3.0985   0.1053
+630/590 band ratio 0.4599   -0.7182       4.5906   0.2083
+
+  PRIMARY feature: 555/445
+    signal = 1.2561 + 0.0483·pH   (slope SE 0.0130, R² = 0.820, p = 0.0342, n = 5)
+    LOO-CV pH RMSE = 1.83 pH units;  noise-limited LOD ≈ 0.153 pH, LOQ ≈ 0.464 pH (instrument noise only; excludes prep/strip error)
+
+  Sigmoid/Henderson–Hasselbalch fit skipped: only 4 distinct pH levels (need ≥ 6 for a 4-parameter curve). Add pH 2–9 steps for a proper S-curve.

@@ -1,0 +1,11 @@
+{
+  "run": "stage0_carrier_check/carrier_1L",
+  "stage0": {
+    "median": 1.5045051125555289,
+    "sd": 0.0009749152635905899,
+    "implied_pH": 3.843260460286805,
+    "drift_pct_per_10min": -0.07467356139027445,
+    "drift_se": 0.05845366211539318,
+    "verdict": "PASS"
+  }
+}

@@ -1,0 +1,155 @@
+{
+  "script_version": "1.0",
+  "n_runs": 9,
+  "n_pulses": 23,
+  "feature": "555/480",
+  "type_by_condition": [
+    {
+      "cond": "A1",
+      "type": "base",
+      "n": 4,
+      "direction_ok": 1.0,
+      "mean_amp": 0.008790962453690376
+    },
+    {
+      "cond": "A2",
+      "type": "base",
+      "n": 4,
+      "direction_ok": 1.0,
+      "mean_amp": 0.030673791554504004
+    },
+    {
+      "cond": "A3",
+      "type": "base",
+      "n": 6,
+      "direction_ok": 1.0,
+      "mean_amp": 0.016822483621029782
+    },
+    {
+      "cond": "B1",
+      "type": "acid",
+      "n": 3,
+      "direction_ok": 1.0,
+      "mean_amp": -0.006623845561986326
+    },
+    {
+      "cond": "B2",
+      "type": "acid",
+      "n": 3,
+      "direction_ok": 1.0,
+      "mean_amp": -0.00956514441483769
+    },
+    {
+      "cond": "B3",
+      "type": "acid",
+      "n": 3,
+      "direction_ok": 1.0,
+      "mean_amp": -0.007126962764654706
+    }
+  ],
+  "gain_models": {
+    "acid": {
+      "slope_per_mL": 0.06491399341821068,
+      "r2_through_origin": 0.7867468483825483,
+      "exponent": 0.7238918480631932,
+      "exponent_se": 0.20643700414396152,
+      "exponent_p_vs_1": 0.2228831723175928
+    },
+    "base": {
+      "slope_per_mL": 0.1782191472420969,
+      "r2_through_origin": 0.8090548393938112,
+      "exponent": 2.011803482865901,
+      "exponent_se": 0.24311477616517432,
+      "exponent_p_vs_1": 0.00131847816955033
+    }
+  },
+  "carryover": {
+    "acid": {
+      "gain_vs_F0_slope": -1.7559599796573588,
+      "se": 4.880547441036696,
+      "p": 0.7296158023996617,
+      "note": "per-mL gain regressed on the pre-pulse baseline level (sigmoid curvature / incomplete recovery)"
+    },
+    "base": {
+      "gain_vs_F0_slope": 0.06741720043173521,
+      "se": 4.29657719537305,
+      "p": 0.9877388434993888,
+      "note": "per-mL gain regressed on the pre-pulse baseline level (sigmoid curvature / incomplete recovery)"
+    }
+  },
+  "stage3_suggestions": {
+    "acid": {
+      "limit": 1.4,
+      "per_volume": [
+        {
+          "volume": 0.05,
+          "worst_peak_ratio": 1.475644699140401,
+          "inside_limit": true,
+          "mean_amp": -0.004952391715177695,
+          "per_level_if_4_levels": 0.0012380979287944238,
+          "level_step_over_5sigma": 0.1368134130425682
+        },
+        {
+          "volume": 0.1,
+          "worst_peak_ratio": 1.4757096069868996,
+          "inside_limit": true,
+          "mean_amp": -0.005123471365630294,
+          "per_level_if_4_levels": 0.0012808678414075736,
+          "level_step_over_5sigma": 0.11501791425495267
+        },
+        {
+          "volume": 0.2,
+          "worst_peak_ratio": 1.4706777736029513,
+          "inside_limit": true,
+          "mean_amp": -0.013240089660670732,
+          "per_level_if_4_levels": 0.003310022415167683,
+          "level_step_over_5sigma": 0.3324594300569934
+        }
+      ],
+      "largest_volume_inside_limit": 0.2,
+      "note": "a level step (v_max/4) should move the ratio by >= 5 sigma; sigma here is the per-cycle baseline noise"
+    },
+    "base": {
+      "limit": 1.58,
+      "per_volume": [
+        {
+          "volume": 0.05,
+          "worst_peak_ratio": 1.4932717140138645,
+          "inside_limit": true,
+          "mean_amp": 0.002923111978019033,
+          "per_level_if_4_levels": 0.0007307779945047582,
+          "level_step_over_5sigma": 0.07653841675910956
+        },
+        {
+          "volume": 0.1,
+          "worst_peak_ratio": 1.5131381892443838,
+          "inside_limit": true,
+          "mean_amp": 0.015024187498829203,
+          "per_level_if_4_levels": 0.003756046874707301,
+          "level_step_over_5sigma": 0.31070361758108217
+        },
+        {
+          "volume": 0.2,
+          "worst_peak_ratio": 1.5305729866513804,
+          "inside_limit": true,
+          "mean_amp": 0.039239086213476215,
+          "per_level_if_4_levels": 0.009809771553369054,
+          "level_step_over_5sigma": 0.8978612594425539
+        }
+      ],
+      "largest_volume_inside_limit": 0.2,
+      "note": "a level step (v_max/4) should move the ratio by >= 5 sigma; sigma here is the per-cycle baseline noise"
+    }
+  },
+  "plan_mismatches": [],
+  "reproducibility_median_abs_rel_diff_pct": 42.31384868397362,
+  "direction_not_as_expected": 0,
+  "od135_flag_pulses": 6,
+  "inputs": {
+    "root": "CRC\\data\\stage02_combined",
+    "manifest": "inputs_manifest.csv"
+  },
+  "made_utc": "2026-10-28T11:23:01Z",
+  "python": "3.12.10",
+  "script_sha256": "56a4bf200647ee57d4cf48ee2cd4c2a7997bc33623940c089ea4858c14140aed"
+}

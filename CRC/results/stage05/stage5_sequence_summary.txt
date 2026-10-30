@@ -1,0 +1,27 @@
+===========================================================================
+STAGE 5 ECHO-STATE PROPERTY (ESP) UNIFIED RUN SPECIFICATIONS
+===========================================================================
+Total Steps: 392 timesteps (Ts = 60.0 s = 1.0 min)
+Total Duration: 6.53 hours (392 minutes)
+
+TIMELINE SEGMENTS:
+  1. ESP-A (Acid Perturbation Start): Steps 0 to 120 (121 min = 2.02 h)
+     - Step 0: Initial Acid Slug (0.50 mL acid via Media pump)
+     - Steps 1-120: Stage 4 Driving Sequence (identical 120 steps)
+  2. Inter-Run Recovery Gap: Steps 121 to 240 (120 min = 2.00 h)
+     - 120 steps of 0.0 mL (continuous carrier flow flushes vial 40x)
+  3. ESP-B (Base Perturbation Start): Steps 241 to 361 (121 min = 2.02 h)
+     - Step 241: Initial Base Slug (0.50 mL base via Alt-media pump)
+     - Steps 242-361: Stage 4 Driving Sequence (identical 120 steps)
+  4. Post-Run Recovery Tail: Steps 362 to 391 (30 min = 0.50 h)
+     - 30 steps of 0.0 mL
+
+CHEMICAL INVENTORY:
+  - Total Acid (Vinegar): 12.5000 mL (97 pulses, including 0.5 mL slug)
+    Ensure >= 20 mL in acid supply bottle
+  - Total Base (Ammonia): 6.0200 mL (117 pulses, including 0.5 mL slug)
+    Ensure >= 15 mL in base supply bottle
+  - Zero / Rest Steps: 178 steps (2.5 hours total resting/gap)
+  - Carrier Flow Consumed: 1.37 L at 3.33 mL/min
+    Ensure >= 2.0 L carrier buffer in supply carboy
+  - Waste Carboy: Ensure >= 2.0 L empty capacity before starting

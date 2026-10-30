@@ -1,0 +1,58 @@
+===========================================================================
+STAGE 6 HOLD-OUT EXECUTIVE REPORT: ZERO-SHOT GENERALIZATION
+Design: Unseen Sequence (Seed 43, 200 Steps, Ts=60s)
+Evaluation: Frozen Readout Trained on Stage 4 Applied Without Refitting
+===========================================================================
+
+1. HYDRAULIC & PHYSICAL AUDIT
+  - Total Timesteps: 200 (Washout: 30, Hold-out Test: 170)
+  - Non-zero Physical Doses: 156 pulses (100% compliance)
+  - Step Duration (Ts): Mean = 60.82 s (SD = 0.68 s)
+  - Acid Delivered: 8.6000 mL
+  - Base Delivered: 4.5600 mL
+  - Carrier Baseline (555/480): 1.4793 ± 0.0017 (Gate: PASSED)
+  - Dynamic Range: 1.4634 to 1.5022 (Bounds: PASSED)
+
+2. ZERO-SHOT HOLD-OUT PERFORMANCE ACROSS FEATURE CONFIGURATIONS
+  Configuration: Ratio555_480_6Taps
+    Features: 7
+    Total Zero-Shot MC (k=1..15): 0.6610 (Null 95th: 0.1028)
+    Lag-1 MC: r2=0.2965 (corr r=0.5445)
+    Lag-2 MC: r2=0.2050 (corr r=0.4528)
+    Lag-3 MC: r2=0.1173 (corr r=0.3425)
+    Zero-Shot Parity Accuracy: Lag-1=59.4%, Lag-2=58.8%, Lag-3=62.9%
+    Zero-Shot NARMA-2 NMSE: 0.6048 (vs Linear Input Baseline: 1.0278)
+
+  Configuration: Protocol_18Taps_Ratios
+    Features: 19
+    Total Zero-Shot MC (k=1..15): 0.6179 (Null 95th: 0.0797)
+    Lag-1 MC: r2=0.2698 (corr r=0.5194)
+    Lag-2 MC: r2=0.2019 (corr r=0.4493)
+    Lag-3 MC: r2=0.1084 (corr r=0.3293)
+    Zero-Shot Parity Accuracy: Lag-1=60.6%, Lag-2=60.0%, Lag-3=62.4%
+    Zero-Shot NARMA-2 NMSE: 0.5891 (vs Linear Input Baseline: 1.0278)
+
+  Configuration: SingleTap60_3Ratios
+    Features: 4
+    Total Zero-Shot MC (k=1..15): 0.6661 (Null 95th: 0.1555)
+    Lag-1 MC: r2=0.3207 (corr r=0.5663)
+    Lag-2 MC: r2=0.1864 (corr r=0.4317)
+    Lag-3 MC: r2=0.1079 (corr r=0.3285)
+    Zero-Shot Parity Accuracy: Lag-1=55.9%, Lag-2=60.0%, Lag-3=62.9%
+    Zero-Shot NARMA-2 NMSE: 0.6107 (vs Linear Input Baseline: 1.0278)
+
+  Configuration: SingleTap60_8Absorbances
+    Features: 9
+    Total Zero-Shot MC (k=1..15): 0.6245 (Null 95th: 0.1445)
+    Lag-1 MC: r2=0.2948 (corr r=0.5430)
+    Lag-2 MC: r2=0.1746 (corr r=0.4178)
+    Lag-3 MC: r2=0.1132 (corr r=0.3364)
+    Zero-Shot Parity Accuracy: Lag-1=57.6%, Lag-2=60.0%, Lag-3=64.1%
+    Zero-Shot NARMA-2 NMSE: 0.6127 (vs Linear Input Baseline: 1.0278)
+
+3. PROTOCOL SECTION 9 DECISION RULE VERDICT
+  - Protocol Criterion: 'If the test score is close to the Stage 4 test score,
+    the readout is stable over hours and days. If it drops sharply, drift is limiting.'
+  - Observed Result: Zero-shot MC reached 0.6610 (Stage 4 was 0.5679).
+  - NARMA-2 NMSE improved from 0.6453 to 0.6048.
+  - VERDICT: PASSED WITH FLYING COLORS. The reservoir demonstrates true zero-shot cross-sequence generalization without refitting.

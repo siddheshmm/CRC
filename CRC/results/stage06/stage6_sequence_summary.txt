@@ -1,0 +1,30 @@
+===========================================================================
+STAGE 6 HOLD-OUT SEQUENCE SPECIFICATIONS
+===========================================================================
+Design Seed: 43 (Independent hold-out test seed)
+Total Steps: 200 (30 Washout, 170 Hold-out Test)
+Step Duration (Ts): 60.0 s (1.0 min)
+Total Sequence Duration: 3.33 hours (3 h 20 min)
+Full Run Duration (with 20 min pre/post baselines): 4.00 hours
+
+PALETTE & CHEMICAL INVENTORY:
+  - Acid Dosing Unit: Media pump (50 uL/level, v_max = 0.20 mL)
+  - Base Dosing Unit: Alt-media pump (20 uL/level, v_max = 0.08 mL)
+  - Acid Pulses: 70 pulses, Total Volume = 8.6000 mL
+  - Base Pulses: 86 pulses, Total Volume = 4.5600 mL
+  - Zero / Idle Steps: 44 steps
+  - Carrier Flow: ~3.33 mL/min continuous inflow
+  - Carrier Buffer Consumed: 0.80 Liters (ensure >= 1.5 L bottle reserve)
+  - Waste Efflux Pump: Continuous / active waste removal mandatory
+
+LEVEL DISTRIBUTION (Test Segment Steps 30..199):
+level
+-4    22
+-3    27
+-2    22
+-1    15
+ 0    14
+ 1    17
+ 2    21
+ 3    15
+ 4    17

@@ -1,0 +1,45 @@
+---
+display_name: Specified Pump Dosing
+
+automation_name: specified_pump_dosing
+
+source: specified_pump_dosing
+
+description: >
+  Execute a sequence of doses using any specified pump (Media, Alt-Media, Waste, or Bipolar).
+  In Bipolar mode, positive doses fire Media pump and negative doses fire Alt-Media pump.
+  Finishes after a specified number of cycles and only shuts off the specified pump at the end,
+  leaving continuous flow pumps completely untouched.
+
+fields:
+  - key: pump
+    unit: null
+    label: "Target Pump"
+    default: media
+    type: string
+    options:
+      - media
+      - alt_media
+      - waste
+      - bipolar
+
+  - key: duration
+    unit: min
+    label: "Schedule interval (minutes between dosing steps)"
+    default: 20.0
+
+  - key: volume_sequence
+    unit: null
+    label: "Volume Sequence in mL (e.g. 0.05, 0.10, -0.05, 0.00)"
+    default: "0.05, 0.10, 0.20, 0.25, 0.20, 0.10"
+    type: string
+
+  - key: default_volume_ml
+    unit: mL
+    label: "Fallback volume in mL (used if volume_sequence is empty)"
+    default: 0.10
+
+  - key: max_cycles
+    unit: cycles
+    label: "Max cycles (e.g. 6 for 6 steps, 0 = unlimited)"
+    default: 6

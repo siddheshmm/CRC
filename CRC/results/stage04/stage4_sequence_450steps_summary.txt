@@ -1,0 +1,33 @@
+===========================================================================
+STAGE 4 BENCHMARK RUN SPECIFICATIONS (450 TIMESTEPS)
+===========================================================================
+Design Seed: 42 (Exact prefix match to Run 1 and Run 2)
+Total Steps: 450 timesteps (Ts = 60.0 s = 1.0 min)
+Dosing Duration: 7.50 hours (450 minutes)
+Total Experiment Duration: 8.17 hours (including 20m pre + 20m post baselines)
+
+CHRONOLOGICAL SEGMENT SPLIT (Contiguous, Never Shuffled):
+  1. Washout Segment: Steps 0 to 29 (30 minutes, 0.0 mL)
+     Allows continuous carrier flow to settle into dynamic steady state.
+  2. Training Segment: Steps 30 to 329 (300 minutes = 5.0 hours, 9-level palette)
+     Overdetermined training set (300 samples for 7-19 features).
+  3. Held-Out Test Segment: Steps 330 to 449 (120 minutes = 2.0 hours, 9-level palette)
+     High-power evaluation set (120 samples, chance noise floor ~0.058).
+
+CHEMICAL INVENTORY REQUIRED:
+  - Acid Stock (Vinegar): Total delivered = 21.7500 mL (169 pulses)
+    Ensure >= 35 mL in the acid supply bottle.
+  - Base Stock (Ammonia): Total delivered = 10.0200 mL (204 pulses)
+    Ensure >= 20 mL in the base supply bottle.
+  - Idle / Zero Steps: 77 steps
+  - Continuous Carrier Buffer Flow: Consumes ~1.63 L at 3.33 mL/min
+    Ensure >= 2.0 L bottle reserve (safely fits in a standard 2.0 L bottle!).
+  - Waste Carboy: Ensure >= 2.0 L empty capacity before starting.
+
+EXECUTION COMMAND ON PIOREACTOR:
+  nohup pio run specified_pump_dosing \
+    --pump bipolar \
+    --csv-file "stage4_sequence_450steps.csv" \
+    --duration 1.0 \
+    --max-cycles 450 > stage4_450steps.log 2>&1 &
+===========================================================================

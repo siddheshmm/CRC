@@ -1,0 +1,76 @@
+===========================================================================
+STAGE 4 REPLICATE & CROSS-VALIDATION EXECUTIVE REPORT
+Runs: Run 1 (2026-10-28) vs Run 2 (2026-10-29) [200 Steps, Ts=60s]
+===========================================================================
+
+1. PHYSICAL REPEATABILITY & HYDRAULIC COMPARISON
+  - Run 1 Baseline F0: 1.4810 ± 0.0016
+  - Run 2 Baseline F0: 1.4827 ± 0.0015
+    Inter-day Baseline Shift: 0.0017 (~0.12%)
+  - Run 1 Dosing Range: 1.4655 to 1.5159
+  - Run 2 Dosing Range: 1.4665 to 1.5081
+  - Optical Trajectory Correlation (1020 points): r = 0.8632 (r² = 0.7451, p = 1.89e-304)
+  - Optical Trajectory Correlation at Tap 60s:   r = 0.8911 (r² = 0.7940)
+  - Trajectory Mean Absolute Error (MAE):        0.00297 ratio units
+
+2. CROSS-RUN GENERALIZATION (2-FOLD CV ACROSS SESSIONS)
+  Configuration: Ratio555_480_6Taps
+    Intra-Run 1 MC (N=40):  0.4532
+    Intra-Run 2 MC (N=40):  0.2446
+    Cross-Run A (Train R1 -> Test R2, N=170): 0.5451
+    Cross-Run B (Train R2 -> Test R1, N=170): 0.5908
+    Mean Cross-Run 2-Fold MC:      0.5679 (Null 95th: 0.3768)
+    Cross Lag-1 MC: r2=0.1803 (r=0.4246)
+    Cross Lag-2 MC: r2=0.1142 (r=0.3379)
+    Cross Lag-3 MC: r2=0.0752 (r=0.2742)
+    Cross Parity Accuracy (Lag-2): 61.2%
+    Cross NARMA-2 NMSE:            0.6453
+
+  Configuration: Protocol_18Taps_Ratios
+    Intra-Run 1 MC (N=40):  0.3562
+    Intra-Run 2 MC (N=40):  0.1545
+    Cross-Run A (Train R1 -> Test R2, N=170): 0.4460
+    Cross-Run B (Train R2 -> Test R1, N=170): 0.5112
+    Mean Cross-Run 2-Fold MC:      0.4786 (Null 95th: 0.3199)
+    Cross Lag-1 MC: r2=0.1519 (r=0.3898)
+    Cross Lag-2 MC: r2=0.1114 (r=0.3338)
+    Cross Lag-3 MC: r2=0.0606 (r=0.2463)
+    Cross Parity Accuracy (Lag-2): 60.0%
+    Cross NARMA-2 NMSE:            0.6474
+
+  Configuration: SingleTap60_8Absorbances
+    Intra-Run 1 MC (N=40):  0.4715
+    Intra-Run 2 MC (N=40):  0.2698
+    Cross-Run A (Train R1 -> Test R2, N=170): 0.3334
+    Cross-Run B (Train R2 -> Test R1, N=170): 0.4362
+    Mean Cross-Run 2-Fold MC:      0.3848 (Null 95th: 0.2761)
+    Cross Lag-1 MC: r2=0.1306 (r=0.3613)
+    Cross Lag-2 MC: r2=0.1048 (r=0.3238)
+    Cross Lag-3 MC: r2=0.0500 (r=0.2237)
+    Cross Parity Accuracy (Lag-2): 62.1%
+    Cross NARMA-2 NMSE:            0.6834
+
+  Configuration: SingleTap60_3Ratios
+    Intra-Run 1 MC (N=40):  0.5299
+    Intra-Run 2 MC (N=40):  0.2874
+    Cross-Run A (Train R1 -> Test R2, N=170): 0.5113
+    Cross-Run B (Train R2 -> Test R1, N=170): 0.5504
+    Mean Cross-Run 2-Fold MC:      0.5309 (Null 95th: 0.4243)
+    Cross Lag-1 MC: r2=0.1521 (r=0.3900)
+    Cross Lag-2 MC: r2=0.1180 (r=0.3436)
+    Cross Lag-3 MC: r2=0.0829 (r=0.2879)
+    Cross Parity Accuracy (Lag-2): 62.6%
+    Cross NARMA-2 NMSE:            0.6516
+
+  Configuration: Full_MultiTap_Absorbances
+    Intra-Run 1 MC (N=40):  0.2943
+    Intra-Run 2 MC (N=40):  0.1293
+    Cross-Run A (Train R1 -> Test R2, N=170): 0.2118
+    Cross-Run B (Train R2 -> Test R1, N=170): 0.2749
+    Mean Cross-Run 2-Fold MC:      0.2434 (Null 95th: 0.1623)
+    Cross Lag-1 MC: r2=0.0684 (r=0.2614)
+    Cross Lag-2 MC: r2=0.0546 (r=0.2336)
+    Cross Lag-3 MC: r2=0.0368 (r=0.1919)
+    Cross Parity Accuracy (Lag-2): 58.5%
+    Cross NARMA-2 NMSE:            0.7410
+

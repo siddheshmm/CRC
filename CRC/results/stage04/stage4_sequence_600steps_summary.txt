@@ -1,0 +1,40 @@
+===========================================================================
+STAGE 4 MAIN 600-TIMESTEP BENCHMARK RUN SPECIFICATIONS
+===========================================================================
+Design Seed: 42 (Matches the 200-step pilot run prefix exactly)
+Total Steps: 600 timesteps (Ts = 60.0 s = 1.0 min)
+Total Sequence Duration: 10.0 hours (600 minutes)
+Full Run Duration: ~10.67 hours (including 20 min pre-baseline + 20 min post-tail)
+
+CHRONOLOGICAL SEGMENT SPLIT (Contiguous, Never Shuffled):
+  1. Washout Segment: Steps 0 to 29 (30 minutes, all volume = 0.0 mL)
+     Allows continuous flow and mixing to settle into dynamic steady state.
+  2. Training Segment: Steps 30 to 429 (400 minutes = 6.67 hours)
+     Uniform discrete inputs over 9 levels {-4..+4}.
+  3. Held-out Test Segment: Steps 430 to 599 (170 minutes = 2.83 hours)
+     Uniform discrete inputs over 9 levels {-4..+4}.
+
+DOSING PALETTE & CALIBRATION:
+  - Acid Dosing Unit: Media pump (vinegar)
+    Levels: +1 = 0.05 mL, +2 = 0.10 mL, +3 = 0.15 mL, +4 = 0.20 mL (v_max = 0.20 mL)
+  - Base Dosing Unit: Alt-media pump (dilute ammonia)
+    Levels: -1 = 0.02 mL, -2 = 0.04 mL, -3 = 0.06 mL, -4 = 0.08 mL (v_max = 0.08 mL)
+  - Idle / Zero: 0.0 mL (Level 0)
+
+CHEMICAL INVENTORY REQUIRED:
+  - Acid Stock (Vinegar): Total delivered = 31.85 mL (247 pulses)
+    -> Ensure >= 45 mL in the acid supply bottle.
+  - Base Stock (Ammonia): Total delivered = 12.56 mL (261 pulses)
+    -> Ensure >= 25 mL in the base supply bottle.
+  - Zero / Rest Steps: 92 steps
+  - Continuous Carrier Buffer Flow: Consumes ~2.13 L at 3.33 mL/min
+    -> Ensure >= 3.0 L (preferably a full 4.0 L carboy) in the carrier bottle.
+  - Waste Carboy: Ensure >= 3.0 L (preferably a full 4.0 L carboy) empty capacity.
+
+EXECUTION COMMAND ON PIOREACTOR:
+  nohup pio run specified_pump_dosing \
+    --pump bipolar \
+    --csv-file "stage4_sequence_600steps.csv" \
+    --duration 1.0 \
+    --max-cycles 600 > stage4_600steps.log 2>&1 &
+===========================================================================

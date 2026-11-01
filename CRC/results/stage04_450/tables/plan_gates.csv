@@ -1,0 +1,24 @@
+gate,plan,measured,status
+Run length,N=600 (30/400/170),N=450 (30/300/120),DEVIATION
+Dose compliance,"all pulses, correct pump","373/373 pulses, 0 sign errors, max vol err 0.0000 mL",PASS
+Step timing,Ts = 61 s nominal,mean 60.97 s (SD 0.65); end drift 95 s,INFO
+Pre-run carrier in gate window,"(1.47, 1.51)",1.4913,PASS
+Noise SD (pre-run),<= 0.002,0.0018,PASS
+Pre-run drift,<= 0.2 %/10 min,+0.009,PASS
+End-of-run drift,<= 0.2 %/10 min,-0.030,PASS
+Pre -> post baseline shift,small vs noise,+0.0023 (+1.2 sigma),INFO
+Responses inside operating window,"(1.4, 1.58)",1.4742 to 1.5139,PASS
+Window utilisation,informative,22% of the allowed range,INFO
+Level step >= 5 sigma (acid),>= 0.0092,0.0011,FAIL
+Level step >= 5 sigma (base),>= 0.0092,0.0014,FAIL
+Decay constant vs V/Q (acid),within 20% of 2.50 min,6.78 min (+171%),FAIL
+Decay constant vs V/Q (base),within 20% of 2.50 min,5.09 min (+104%),FAIL
+Total MC above shift null (test),> null 95th,0.353 vs 0.070 (p=0.003),PASS
+Total MC vs plan ballpark,"(2.0, 4.0)",0.35,BELOW
+Effective dimension vs plan ballpark,"(2.0, 4.0)",PR 1.31; 1 significant PCs,BELOW
+Beats raw-input linear baseline: Degree-2 capacity,block-bootstrap CI > 0,"diff -0.010 [-0.057, +0.057]",NOT SEPARABLE
+Beats raw-input linear baseline: NARMA-2,block-bootstrap CI > 0,"diff -0.523 [-0.583, -0.437]",BASELINE BETTER
+Beats raw-input linear baseline: NARMA-10,block-bootstrap CI > 0,"diff -0.692 [-0.780, -0.570]",BASELINE BETTER
+Delayed parity k=1 above shift null,bal. acc > null 95th,"0.478 vs 0.571 (p=0.662, n=85)",FAIL
+Delayed parity k=2 above shift null,bal. acc > null 95th,"0.449 vs 0.555 (p=0.935, n=85)",FAIL
+Delayed parity k=3 above shift null,bal. acc > null 95th,"0.438 vs 0.574 (p=0.930, n=85)",FAIL

@@ -1,0 +1,516 @@
+{
+  "audit": {
+    "n_steps": 450,
+    "n_wash": 30,
+    "n_train": 300,
+    "n_test": 120,
+    "run_hours": 9.248578194444443,
+    "step_mean_s": 60.97369083255317,
+    "step_sd_s": 0.6545255342277947,
+    "step_min_s": 60.18799999999828,
+    "step_max_s": 62.53900000000067,
+    "cum_drift_end_s": 94.93300000004456,
+    "pre": {
+      "mean": 1.4912863738717272,
+      "sd": 0.0018367289133255536,
+      "drift_pct_10min": 0.00925355042580019,
+      "n": 244
+    },
+    "post": {
+      "mean": 1.4935642647653604,
+      "sd": 0.002037676921186453,
+      "drift_pct_10min": -0.02971141429223768,
+      "n": 240
+    },
+    "F_min": 1.4741962774957698,
+    "F_max": 1.513941967445152,
+    "window_used_frac": 0.22080938860767876,
+    "post_minus_pre": 0.002277890893633172,
+    "tau_theory_min": 2.5,
+    "taps_in_data_gaps": 0,
+    "align": {
+      "n_planned_nonzero": 373,
+      "n_clusters": 373,
+      "sign_mismatches": 0,
+      "max_volume_error_mL": 0.0,
+      "step_period_fit_s": 61.00330612721241,
+      "max_timing_residual_s": 10.421808604969556
+    },
+    "n_acid_pulses": 169,
+    "n_base_pulses": 204,
+    "acid_ml": 21.75,
+    "base_ml": 10.02,
+    "waste_events": 66424,
+    "waste_ml": 3128.1699097767996
+  },
+  "response": {
+    "acid": {
+      "tau_min": 6.782456785388193,
+      "tau_se_min": 0.37645357393399037,
+      "peak_gain_per_mL": -0.022800461374413557,
+      "peak_lag_s": 20.0,
+      "A": -0.019333019947397265,
+      "l0": 20.0
+    },
+    "base": {
+      "tau_min": 5.093388607767781,
+      "tau_se_min": 0.19532571344528485,
+      "peak_gain_per_mL": 0.06918740436391564,
+      "peak_lag_s": 10.0,
+      "A": 0.07318313166561907,
+      "l0": 10.0
+    },
+    "step_dF_acid": 0.0011400230687206778,
+    "step_dF_base": 0.0013837480872783128,
+    "sigma": 0.0018367289133255536,
+    "five_sigma": 0.009183644566627768,
+    "linear_fir_r2_train": 0.7612575801998355,
+    "linear_fir_r2_test": 0.6672135694439344
+  },
+  "memory": {
+    "total_mc": 0.3528063521255782,
+    "null_mean": 0.015711462978111747,
+    "null_95": 0.06959199410336969,
+    "p_total": 0.0033222591362126247,
+    "lags": [
+      {
+        "k": 1,
+        "r2": 0.14596064410690768,
+        "pearson_r": 0.39881941946855887,
+        "null95": 0.0038212458347743677,
+        "p": 0.0033222591362126247
+      },
+      {
+        "k": 2,
+        "r2": 0.1164024381167369,
+        "pearson_r": 0.34686869172668056,
+        "null95": 0.0032667018101779632,
+        "p": 0.0033222591362126247
+      },
+      {
+        "k": 3,
+        "r2": 0.07074496700147892,
+        "pearson_r": 0.2684301942799619,
+        "null95": 0.005320222149907967,
+        "p": 0.0033222591362126247
+      },
+      {
+        "k": 4,
+        "r2": 0.015047434422487016,
+        "pearson_r": 0.12315856500797967,
+        "null95": 0.003946505389133992,
+        "p": 0.029900332225913623
+      },
+      {
+        "k": 5,
+        "r2": 0.004259572088834984,
+        "pearson_r": 0.08922246294883367,
+        "null95": 0.004389531600003298,
+        "p": 0.05647840531561462
+      },
+      {
+        "k": 6,
+        "r2": -0.008008990092703394,
+        "pearson_r": 0.02348165218542662,
+        "null95": 0.0035595105807941785,
+        "p": 0.8205980066445183
+      },
+      {
+        "k": 7,
+        "r2": -0.027266182081101098,
+        "pearson_r": -0.16315072328783545,
+        "null95": 0.008136250565030534,
+        "p": 0.9136212624584718
+      },
+      {
+        "k": 8,
+        "r2": -0.006598399864758742,
+        "pearson_r": -0.19071722746892936,
+        "null95": 0.003948866168387315,
+        "p": 0.7906976744186046
+      },
+      {
+        "k": 9,
+        "r2": -0.002015996456461444,
+        "pearson_r": -0.18092266602996024,
+        "null95": 0.008138947938787522,
+        "p": 0.7242524916943521
+      },
+      {
+        "k": 10,
+        "r2": 0.0003912963891327115,
+        "pearson_r": 0.22674993639820692,
+        "null95": 0.004666862701214098,
+        "p": 0.3122923588039867
+      },
+      {
+        "k": 11,
+        "r2": -0.000151676479859697,
+        "pearson_r": 0.0815209694064253,
+        "null95": 0.004467219770451772,
+        "p": 0.5083056478405316
+      },
+      {
+        "k": 12,
+        "r2": -0.0009123077112143108,
+        "pearson_r": -0.005099305250406147,
+        "null95": 0.004635955043901931,
+        "p": 0.5714285714285714
+      },
+      {
+        "k": 13,
+        "r2": -0.0016986395346880734,
+        "pearson_r": -0.006431905669612455,
+        "null95": 0.006004770112212532,
+        "p": 0.654485049833887
+      },
+      {
+        "k": 14,
+        "r2": -0.01266635171272057,
+        "pearson_r": -0.12426803155805227,
+        "null95": 0.004555233152071512,
+        "p": 0.8471760797342193
+      },
+      {
+        "k": 15,
+        "r2": -0.008627895181317902,
+        "pearson_r": -0.17442441538668674,
+        "null95": 0.004779093056677843,
+        "p": 0.8504983388704319
+      }
+    ],
+    "k0": {
+      "r2": 0.23516797975063763,
+      "pearson_r": 0.5233156733442718,
+      "null95": 0.0033545214441885254,
+      "p": 0.0033222591362126247
+    },
+    "significant_lags": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "outer_total_mc": 0.43722972521534453,
+    "outer_null_95": 0.018192777037651608,
+    "outer_p": 0.009900990099009901,
+    "effective_dimension_PR": 1.3101456310217832,
+    "n_significant_PCs": 1,
+    "n_test": 120,
+    "n_train": 300,
+    "expected_mc": [
+      2.0,
+      4.0
+    ],
+    "expected_ed": [
+      2.0,
+      4.0
+    ]
+  },
+  "nonlinear": {
+    "deg1": {
+      "reservoir": 0.5875830354870831,
+      "baseline": 5.999999999931309,
+      "null95": 0.034766017124814114
+    },
+    "deg2": {
+      "reservoir": 0.01728061954831228,
+      "baseline": 0.02688606475749833,
+      "null95": 0.11864527746338582,
+      "p": 0.6710963455149501
+    },
+    "narma2": {
+      "reservoir_nmse": 0.7497019101526295,
+      "baseline_nmse": 0.2264795306819647,
+      "null_nmse_5th": -0.053382637063865174,
+      "p": 0.0033222591362126247
+    },
+    "narma10": {
+      "reservoir_nmse": 0.9358364438966764,
+      "baseline_nmse": 0.24357008492378607,
+      "null_nmse_5th": -0.20780611874176427,
+      "p": 0.16943521594684385
+    },
+    "bootstrap": {
+      "Degree-2 capacity": {
+        "reservoir": 0.01728061954831106,
+        "baseline": 0.02688606475749733,
+        "diff": -0.00960544520918627,
+        "ci_lo": -0.057426849338632305,
+        "ci_hi": 0.05743405719204464,
+        "reservoir_wins": false,
+        "baseline_wins": false
+      },
+      "NARMA-2": {
+        "reservoir": 0.7497019101526297,
+        "baseline": 0.22647953068196472,
+        "diff": -0.523222379470665,
+        "ci_lo": -0.5831112937904823,
+        "ci_hi": -0.43690437837186624,
+        "reservoir_wins": false,
+        "baseline_wins": true
+      },
+      "NARMA-10": {
+        "reservoir": 0.9358364438966766,
+        "baseline": 0.24357008492378596,
+        "diff": -0.6922663589728907,
+        "ci_lo": -0.7801473558808288,
+        "ci_hi": -0.5703495818825796,
+        "reservoir_wins": false,
+        "baseline_wins": true
+      }
+    }
+  },
+  "parity": {
+    "k=1": {
+      "C": 0.003,
+      "primary": {
+        "bal_acc": 0.4778270509977827,
+        "acc": 0.47058823529411764,
+        "majority": 0.5176470588235295,
+        "n": 85,
+        "null95": 0.5705128205128205,
+        "p": 0.6616915422885572,
+        "raw_linear_bal_acc": 0.5523835920177385
+      },
+      "outer": {
+        "bal_acc": 0.5217079432195711,
+        "acc": 0.5214723926380368,
+        "majority": 0.5276073619631901,
+        "n": 326,
+        "null95": 0.5469371668793634,
+        "p": 0.2537313432835821,
+        "raw_linear_bal_acc": 0.6042736333434008
+      }
+    },
+    "k=2": {
+      "C": 0.003,
+      "primary": {
+        "bal_acc": 0.4485049833887043,
+        "acc": 0.4470588235294118,
+        "majority": 0.5058823529411764,
+        "n": 85,
+        "null95": 0.554880266588176,
+        "p": 0.9353233830845771,
+        "raw_linear_bal_acc": 0.5415282392026578
+      },
+      "outer": {
+        "bal_acc": 0.5688313631602574,
+        "acc": 0.5688073394495413,
+        "majority": 0.5015290519877675,
+        "n": 327,
+        "null95": 0.541748749654256,
+        "p": 0.004975124378109453,
+        "raw_linear_bal_acc": 0.5565053119856351
+      }
+    },
+    "k=3": {
+      "C": 3.0,
+      "primary": {
+        "bal_acc": 0.4375,
+        "acc": 0.43529411764705883,
+        "majority": 0.5294117647058824,
+        "n": 85,
+        "null95": 0.5739436472702286,
+        "p": 0.9303482587064676,
+        "raw_linear_bal_acc": 0.5708333333333333
+      },
+      "outer": {
+        "bal_acc": 0.5114583333333333,
+        "acc": 0.5121951219512195,
+        "majority": 0.5121951219512195,
+        "n": 328,
+        "null95": 0.5487702156334231,
+        "p": 0.39303482587064675,
+        "raw_linear_bal_acc": 0.5733630952380953
+      }
+    }
+  },
+  "ablation": [
+    {
+      "config": "Protocol18 (plan)",
+      "n_features": 19,
+      "total_mc": 0.3528063521255782,
+      "mc_null95": 0.06959199410336969,
+      "deg2": 0.01728061954831228,
+      "narma2_nmse": 0.7497019101526295,
+      "narma10_nmse": 0.9358364438966764
+    },
+    {
+      "config": "Protocol18, no time term",
+      "n_features": 18,
+      "total_mc": 0.3253932371963719,
+      "mc_null95": 0.05088415741594865,
+      "deg2": 0.015530835751844774,
+      "narma2_nmse": 0.7034898701904215,
+      "narma10_nmse": 0.9289094555309145
+    },
+    {
+      "config": "555/480, 6 taps",
+      "n_features": 7,
+      "total_mc": 0.31640000147225,
+      "mc_null95": 0.11875470778440933,
+      "deg2": 0.014963447644100403,
+      "narma2_nmse": 0.7696771056051411,
+      "narma10_nmse": 0.9674598285929289
+    },
+    {
+      "config": "3 ratios, tap 60",
+      "n_features": 4,
+      "total_mc": 0.3431964015494753,
+      "mc_null95": 0.09850861297214082,
+      "deg2": 0.006144462088370273,
+      "narma2_nmse": 0.8074851810895475,
+      "narma10_nmse": 0.9555518640845468
+    },
+    {
+      "config": "8-band absorbance, tap 60",
+      "n_features": 9,
+      "total_mc": 0.3153149118408277,
+      "mc_null95": 0.05272810547072269,
+      "deg2": 0.010175861646903206,
+      "narma2_nmse": 0.9054907227479473,
+      "narma10_nmse": 0.991404844674303
+    }
+  ],
+  "gates": [
+    {
+      "gate": "Run length",
+      "plan": "N=600 (30/400/170)",
+      "measured": "N=450 (30/300/120)",
+      "status": "DEVIATION"
+    },
+    {
+      "gate": "Dose compliance",
+      "plan": "all pulses, correct pump",
+      "measured": "373/373 pulses, 0 sign errors, max vol err 0.0000 mL",
+      "status": "PASS"
+    },
+    {
+      "gate": "Step timing",
+      "plan": "Ts = 61 s nominal",
+      "measured": "mean 60.97 s (SD 0.65); end drift 95 s",
+      "status": "INFO"
+    },
+    {
+      "gate": "Pre-run carrier in gate window",
+      "plan": "(1.47, 1.51)",
+      "measured": "1.4913",
+      "status": "PASS"
+    },
+    {
+      "gate": "Noise SD (pre-run)",
+      "plan": "<= 0.002",
+      "measured": "0.0018",
+      "status": "PASS"
+    },
+    {
+      "gate": "Pre-run drift",
+      "plan": "<= 0.2 %/10 min",
+      "measured": "+0.009",
+      "status": "PASS"
+    },
+    {
+      "gate": "End-of-run drift",
+      "plan": "<= 0.2 %/10 min",
+      "measured": "-0.030",
+      "status": "PASS"
+    },
+    {
+      "gate": "Pre -> post baseline shift",
+      "plan": "small vs noise",
+      "measured": "+0.0023 (+1.2 sigma)",
+      "status": "INFO"
+    },
+    {
+      "gate": "Responses inside operating window",
+      "plan": "(1.4, 1.58)",
+      "measured": "1.4742 to 1.5139",
+      "status": "PASS"
+    },
+    {
+      "gate": "Window utilisation",
+      "plan": "informative",
+      "measured": "22% of the allowed range",
+      "status": "INFO"
+    },
+    {
+      "gate": "Level step >= 5 sigma (acid)",
+      "plan": ">= 0.0092",
+      "measured": "0.0011",
+      "status": "FAIL"
+    },
+    {
+      "gate": "Level step >= 5 sigma (base)",
+      "plan": ">= 0.0092",
+      "measured": "0.0014",
+      "status": "FAIL"
+    },
+    {
+      "gate": "Decay constant vs V/Q (acid)",
+      "plan": "within 20% of 2.50 min",
+      "measured": "6.78 min (+171%)",
+      "status": "FAIL"
+    },
+    {
+      "gate": "Decay constant vs V/Q (base)",
+      "plan": "within 20% of 2.50 min",
+      "measured": "5.09 min (+104%)",
+      "status": "FAIL"
+    },
+    {
+      "gate": "Total MC above shift null (test)",
+      "plan": "> null 95th",
+      "measured": "0.353 vs 0.070 (p=0.003)",
+      "status": "PASS"
+    },
+    {
+      "gate": "Total MC vs plan ballpark",
+      "plan": "(2.0, 4.0)",
+      "measured": "0.35",
+      "status": "BELOW"
+    },
+    {
+      "gate": "Effective dimension vs plan ballpark",
+      "plan": "(2.0, 4.0)",
+      "measured": "PR 1.31; 1 significant PCs",
+      "status": "BELOW"
+    },
+    {
+      "gate": "Beats raw-input linear baseline: Degree-2 capacity",
+      "plan": "block-bootstrap CI > 0",
+      "measured": "diff -0.010 [-0.057, +0.057]",
+      "status": "NOT SEPARABLE"
+    },
+    {
+      "gate": "Beats raw-input linear baseline: NARMA-2",
+      "plan": "block-bootstrap CI > 0",
+      "measured": "diff -0.523 [-0.583, -0.437]",
+      "status": "BASELINE BETTER"
+    },
+    {
+      "gate": "Beats raw-input linear baseline: NARMA-10",
+      "plan": "block-bootstrap CI > 0",
+      "measured": "diff -0.692 [-0.780, -0.570]",
+      "status": "BASELINE BETTER"
+    },
+    {
+      "gate": "Delayed parity k=1 above shift null",
+      "plan": "bal. acc > null 95th",
+      "measured": "0.478 vs 0.571 (p=0.662, n=85)",
+      "status": "FAIL"
+    },
+    {
+      "gate": "Delayed parity k=2 above shift null",
+      "plan": "bal. acc > null 95th",
+      "measured": "0.449 vs 0.555 (p=0.935, n=85)",
+      "status": "FAIL"
+    },
+    {
+      "gate": "Delayed parity k=3 above shift null",
+      "plan": "bal. acc > null 95th",
+      "measured": "0.438 vs 0.574 (p=0.930, n=85)",
+      "status": "FAIL"
+    }
+  ]
+}

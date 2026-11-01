@@ -1,0 +1,81 @@
+{
+  "hydraulics": {
+    "Q_mean_mL_per_min": 4.0,
+    "Q_runs": [
+      4.1,
+      3.9
+    ],
+    "volume_mL": 10.0,
+    "tau_V_over_Q_min": 2.5,
+    "tau_step_fit_min": 1.99,
+    "effective_mixed_volume_mL": 7.96,
+    "effective_volume_fraction": 0.796,
+    "step_s_tau_over_3": [
+      50.0,
+      39.8
+    ],
+    "gates": [
+      {
+        "criterion": "in window >= 30 min continuous (1.47-1.51)",
+        "passed": true,
+        "detail": "63.0 min; 99.3% of readings"
+      },
+      {
+        "criterion": "|drift| <= 0.2 %/10 min (stage gate)",
+        "passed": true,
+        "detail": "-0.025 \u00b1 0.006 (95% CI)"
+      },
+      {
+        "criterion": "|drift| <= 0.05 %/10 min (10 h run guideline)",
+        "passed": true,
+        "detail": "-0.025; CI stays within the limit"
+      },
+      {
+        "criterion": "recent drift (last 20 min) <= 0.05 %/10 min (not accelerating)",
+        "passed": false,
+        "detail": "-0.060 \u00b1 0.029 (95% CI); curvature p = 6e-07"
+      },
+      {
+        "criterion": "noise SD per cycle <= 0.003 (design sigma)",
+        "passed": true,
+        "detail": "median 0.0017, worst bin 0.0021"
+      }
+    ],
+    "recent_drift": -0.05993700661848709,
+    "curvature_p": 5.887975017548897e-07,
+    "baseline_median": 1.474004,
+    "noise_sd_median": 0.0016972086311661495
+  },
+  "multistage_baselines": {
+    "Stage 0 (Carrier Check)": {
+      "date": "2026-10-26",
+      "median_F0": 1.5045051125555289,
+      "sd": 0.0009749152635905899,
+      "drift_pct_per_10min": -0.07467356139027445
+    },
+    "Stage 1 (Flow Baseline)": {
+      "date": "2026-10-27",
+      "median_F0": 1.474004,
+      "sd": 0.0016972086311661495,
+      "drift_pct_per_10min": -0.025479163339160473
+    },
+    "Stage 4 Run 1": {
+      "date": "2026-10-28",
+      "median_F0": 1.4809464532839796,
+      "sd": 0.0016083793972897183,
+      "drift_pct_per_10min": NaN
+    },
+    "Stage 5 (ESP Run)": {
+      "date": "2026-10-30",
+      "median_F0": 1.4866165412070063,
+      "sd": 0.0012956447051949362,
+      "drift_pct_per_10min": 0.006728550487247578
+    },
+    "Stage 6 (Hold-out)": {
+      "date": "2026-10-29",
+      "median_F0": 1.4793293257828912,
+      "sd": 0.0017143386789515245,
+      "drift_pct_per_10min": NaN
+    }
+  }
+}

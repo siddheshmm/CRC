@@ -5,10 +5,18 @@ stage6_benchmark_analysis.py
 Comprehensive Scientific Benchmark Analysis of Stage 6 (Hold-Out Generalization):
 - Seed 43, 200 timesteps (30 washout + 170 hold-out test, Ts = 60s).
 - Physical & hydraulic audit (156 dose clusters, step jitter, OD stability).
-- ZERO-SHOT EVALUATION: Applying frozen readout weights trained on Stage 4 (Seed 42)
-  directly to Stage 6 (Seed 43) WITHOUT REFITTING (testing true cross-sequence transfer).
-- Memory Capacity (MC) evaluation across lags k=1..15 vs Shuffled Null floor.
-- Nonlinear hold-out transfer: Delayed Parity / XOR, Degree-2 Capacity, NARMA-2.
+- STRICT ZERO-SHOT EVALUATION:
+    * Applying frozen readout weights trained on Stage 4 (Seed 42) directly to Stage 6 (Seed 43).
+    * Feature standardisation fits StandardScaler strictly on Stage 4 pooled training data,
+      eliminating test-set data leakage.
+- Standardized protocol baselines:
+    * Baseline 1: Raw delayed inputs u(t..t-15) and u(t..t-3) fitted on Stage 4 and tested on Stage 6.
+    * Baseline 2: Constant training mean predictor (NMSE = 1.0, R² = 0.0).
+    * Baseline 3: Circularly shifted input null (seeded, 100 permutations).
+- Audited Delayed Parity / XOR against trivial majority-class predictor baseline.
+- NARMA-2 benchmark compared against Baseline 1.
+- Honest assessment of Memory Capacity: genuine fading memory restricted to lags 1..3
+  (MC ≈ 0.65 vs null ~0.10), noting shortfall from the plan's ballpark expectation of 2..4.
 - 6 High-resolution publication-grade figures and structured JSON/TXT export.
 """
 
@@ -19,9 +27,9 @@ import warnings
 import numpy as np
 import pandas as pd
 from scipy import stats
-from sklearn.linear_model import Ridge
+from sklearn.linear_model import Ridge, LogisticRegression
 from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import KFold
+from sklearn.metrics import balanced_accuracy_score
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -50,6 +58,8 @@ BAND_COLORS = {
 }
 TAPS = [10, 20, 30, 40, 50, 60]
 RATIO_COLS = ["r_555_480", "r_555_445", "r_630_555"]
+MAX_LAG = 15
+RNG = np.random.RandomState(42)
 
 
 # -----------------------------------------------------------------------------
@@ -225,7 +235,7 @@ def extract_stage6_features(wide_interp, df_seq, step_times):
 
 
 # -----------------------------------------------------------------------------
-# 3. Zero-Shot Evaluation (Stage 4 Readout -> Stage 6)
+# 3. Zero-Shot Evaluation (Stage 4 Readout -> Stage 6 Hold-Out)
 # -----------------------------------------------------------------------------
 def evaluate_holdout_transfer(df_feat_s6):
     print("\n" + "=" * 70)
@@ -238,10 +248,57 @@ def evaluate_holdout_transfer(df_feat_s6):
 
     active_s4 = (df_s4_r1["step"] >= 30).values
     active_s6 = (df_feat_s6["step"] >= 30).values
+    N_holdout = int(np.sum(active_s6))  # 170 steps
 
     u_s4 = df_s4_r1["u"].values
     u_s6 = df_feat_s6["u"].values
 
+    # Build Raw Delayed Inputs for Baseline 1
+    def get_lag_matrix(u, K=MAX_LAG):
+        X = np.zeros((len(u), K + 1))
+        for k in range(K + 1):
+            if k == 0: X[:, 0] = u
+            else: X[k:, k] = u[:-k]
+        return X
+
+    X_raw_s4 = get_lag_matrix(u_s4, MAX_LAG)
+    X_raw_s6 = get_lag_matrix(u_s6, MAX_LAG)
+
+    # 3.1 NARMA-2 Target
+    u_norm4 = (u_s4 - np.min(u_s4)) / (np.ptp(u_s4) if np.ptp(u_s4) > 0 else 1.0) * 0.5
+    y_narma4 = np.zeros(len(u_s4))
+    for t in range(1, len(u_s4) - 1):
+        y_narma4[t+1] = 0.4 * y_narma4[t] + 0.4 * y_narma4[t] * y_narma4[t-1] + 0.6 * (u_norm4[t] ** 3) + 0.1
+
+    u_norm6 = (u_s6 - np.min(u_s6)) / (np.ptp(u_s6) if np.ptp(u_s6) > 0 else 1.0) * 0.5
+    y_narma6 = np.zeros(len(u_s6))
+    for t in range(1, len(u_s6) - 1):
+        y_narma6[t+1] = 0.4 * y_narma6[t] + 0.4 * y_narma6[t] * y_narma6[t-1] + 0.6 * (u_norm6[t] ** 3) + 0.1
+
+    # Baseline 1 NARMA-2: u(t..t-15) and u(t..t-3)
+    scl_b1_15 = StandardScaler()
+    Xtr_b1_15 = scl_b1_15.fit_transform(np.vstack([X_raw_s4[active_s4], X_raw_s4[active_s4]]))
+    Xte_b1_15 = scl_b1_15.transform(X_raw_s6[active_s6])
+    y_tr_narma = np.concatenate([y_narma4[active_s4], y_narma4[active_s4]])
+    y_te_narma = y_narma6[active_s6]
+
+    m_b1_15 = Ridge(alpha=10.0).fit(Xtr_b1_15, y_tr_narma)
+    pred_b1_15 = m_b1_15.predict(Xte_b1_15)
+    nmse_b1_15 = float(np.mean((y_te_narma - pred_b1_15)**2) / np.var(y_te_narma))
+
+    scl_b1_3 = StandardScaler()
+    Xtr_b1_3 = scl_b1_3.fit_transform(np.vstack([X_raw_s4[active_s4, :4], X_raw_s4[active_s4, :4]]))
+    Xte_b1_3 = scl_b1_3.transform(X_raw_s6[active_s6, :4])
+    m_b1_3 = Ridge(alpha=10.0).fit(Xtr_b1_3, y_tr_narma)
+    pred_b1_3 = m_b1_3.predict(Xte_b1_3)
+    nmse_b1_3 = float(np.mean((y_te_narma - pred_b1_3)**2) / np.var(y_te_narma))
+
+    print(f"--- PROTOCOL BASELINES ON STAGE 6 ---")
+    print(f"  Baseline 1 (Raw u(t..t-15)) NARMA-2 NMSE: {nmse_b1_15:.4f}")
+    print(f"  Baseline 1 (Raw u(t..t-3))  NARMA-2 NMSE: {nmse_b1_3:.4f}")
+    print(f"  Baseline 2 (Constant Mean)   NARMA-2 NMSE: 1.0000")
+
+    # Feature Configurations
     feat_configs = {
         "Ratio555_480_6Taps": [f"r_555_480_tap{t}" for t in TAPS] + ["time_drift"],
         "Protocol_18Taps_Ratios": [f"{r}_tap{t}" for t in TAPS for r in RATIO_COLS] + ["time_drift"],
@@ -249,26 +306,31 @@ def evaluate_holdout_transfer(df_feat_s6):
         "SingleTap60_8Absorbances": [f"A_{b}_tap60" for b in BANDS] + ["time_drift"],
     }
 
-    results = {}
+    results = {
+        "baseline1": {
+            "narma2_nmse_lag15": nmse_b1_15,
+            "narma2_nmse_lag3": nmse_b1_3,
+            "pred": pred_b1_15.tolist()
+        },
+        "baseline2": {
+            "narma2_nmse": 1.0
+        },
+        "holdout_steps": N_holdout,
+        "configs": {}
+    }
 
     for cfg_name, cols in feat_configs.items():
         X_s4_r1 = df_s4_r1.loc[active_s4, cols].values
         X_s4_r2 = df_s4_r2.loc[active_s4, cols].values
         X_s6 = df_feat_s6.loc[active_s6, cols].values
 
-        # Standardize each run independently (removes inter-day optical offsets)
-        scl1 = StandardScaler()
-        X1_s = scl1.fit_transform(X_s4_r1)
-        scl2 = StandardScaler()
-        X2_s = scl2.fit_transform(X_s4_r2)
-        scl6 = StandardScaler()
-        X6_s = scl6.fit_transform(X_s6)
+        # Strict Zero-Shot StandardScaler: Fit on Stage 4 pooled training data ONLY
+        X_pool_raw = np.vstack([X_s4_r1, X_s4_r2])
+        scl_frozen = StandardScaler().fit(X_pool_raw)
+        X_pool_s = scl_frozen.transform(X_pool_raw)
+        X6_s = scl_frozen.transform(X_s6)  # No test set statistics used!
 
-        # Pooled Stage 4 training data (340 samples)
-        X_pool = np.vstack([X1_s, X2_s])
-        u_pool = np.concatenate([u_s4[active_s4], u_s4[active_s4]])
-
-        # 3.1 Linear Memory Capacity (Lags 1..15)
+        # 3.2 Linear Memory Capacity (Lags 1..15)
         mc_lags = []
         preds_dict = {}
 
@@ -282,38 +344,55 @@ def evaluate_holdout_transfer(df_feat_s6):
             m_s6 = active_s6 & ~np.isnan(y_s6_k)
 
             y_pool_k = np.concatenate([y_s4_k[m_s4], y_s4_k[m_s4]])
-            X_pool_k = np.vstack([X1_s[~np.isnan(y_s4_k[active_s4])], X2_s[~np.isnan(y_s4_k[active_s4])]])
+            X_pool_k = np.vstack([X_pool_s[:len(X_s4_r1)][~np.isnan(y_s4_k[active_s4])],
+                                  X_pool_s[len(X_s4_r1):][~np.isnan(y_s4_k[active_s4])]])
 
             # Fit on Stage 4 pooled training set
             model = Ridge(alpha=10.0).fit(X_pool_k, y_pool_k)
 
-            # Predict on Stage 6 (ZERO-SHOT)
+            # Predict on Stage 6 (STRICT ZERO-SHOT)
             X6_test = X6_s[~np.isnan(y_s6_k[active_s6])]
             y6_test = y_s6_k[m_s6]
             pred6 = model.predict(X6_test)
 
-            r = np.corrcoef(y6_test, pred6)[0, 1] if np.var(pred6) > 0 else 0.0
+            r = float(np.corrcoef(y6_test, pred6)[0, 1]) if np.var(pred6) > 1e-12 else 0.0
             r2 = max(0.0, r**2) if r > 0 else 0.0
-            nmse = np.mean((y6_test - pred6)**2) / np.var(y6_test) if np.var(y6_test) > 0 else 1.0
 
-            mc_lags.append({"lag": k, "r": float(r), "r2": float(r2), "nmse": float(nmse)})
+            y_tr_mean = float(np.mean(y_pool_k))
+            sse = np.sum((y6_test - pred6)**2)
+            sst = np.sum((y6_test - y_tr_mean)**2)
+            oos_r2 = float(1.0 - (sse / sst)) if sst > 1e-12 else 0.0
+            nmse = float(np.mean((y6_test - pred6)**2) / np.var(y6_test)) if np.var(y6_test) > 1e-12 else 1.0
+
+            mc_lags.append({
+                "lag": k,
+                "r": float(r),
+                "r2": float(r2),
+                "oos_r2": float(oos_r2),
+                "nmse": float(nmse)
+            })
             if k <= 3:
                 preds_dict[k] = {"actual": y6_test.tolist(), "predicted": pred6.tolist()}
 
         total_mc = sum(it["r2"] for it in mc_lags)
+        total_oos_mc = sum(max(0.0, it["oos_r2"]) for it in mc_lags)
 
-        # 3.2 Shuffled Null Baseline for Stage 6 (100 permutations)
+        # Baseline 3: Circularly Shifted Null Baseline for Stage 6 (100 permutations)
+        shift_rng = np.random.RandomState(42)
         null_totals = []
         for _ in range(100):
-            sh_u = np.random.permutation(u_s6)
+            roll_offset = int(shift_rng.randint(40, len(u_s6) - 40))
+            u_sh6 = np.roll(u_s6, roll_offset)
             sh_tot = 0.0
             for k in range(1, 16):
-                y_sh = np.full(len(sh_u), np.nan)
-                y_sh[k:] = sh_u[:-k]
+                y_sh = np.full(len(u_sh6), np.nan)
+                y_sh[k:] = u_sh6[:-k]
                 m_sh = active_s6 & ~np.isnan(y_sh)
-                r_sh = np.corrcoef(y_sh[m_sh], pred6[:len(y_sh[m_sh])])[0, 1] if np.var(pred6) > 0 else 0.0
-                sh_tot += max(0.0, r_sh**2) if r_sh > 0 else 0.0
+                pred_k = np.array(preds_dict.get(k, {}).get("predicted", pred6))[:np.sum(m_sh)]
+                r_sh = np.corrcoef(y_sh[m_sh], pred_k)[0, 1] if np.var(pred_k) > 1e-12 else 0.0
+                sh_tot += max(0.0, r_sh**2)
             null_totals.append(sh_tot)
+        null_mean = float(np.mean(null_totals))
         null_95th = float(np.percentile(null_totals, 95))
 
         # 3.3 Zero-Shot Delayed Parity
@@ -332,54 +411,54 @@ def evaluate_holdout_transfer(df_feat_s6):
             m4 = active_s4 & ~np.isnan(y_par4)
             m6 = active_s6 & ~np.isnan(y_par6)
 
-            X_pool_p = np.vstack([X1_s[~np.isnan(y_par4[active_s4])], X2_s[~np.isnan(y_par4[active_s4])]])
+            X_pool_p = np.vstack([X_pool_s[:len(X_s4_r1)][~np.isnan(y_par4[active_s4])],
+                                  X_pool_s[len(X_s4_r1):][~np.isnan(y_par4[active_s4])]])
             y_pool_p = np.concatenate([y_par4[m4], y_par4[m4]])
 
-            m_par = Ridge(alpha=10.0).fit(X_pool_p, y_pool_p)
-            p_par = np.where(m_par.predict(X6_s[~np.isnan(y_par6[active_s6])]) >= 0, 1.0, -1.0)
-            acc = float(np.mean(p_par == y_par6[m6]))
-            parity_res[f"lag_{lag_p}"] = acc
+            m_par = LogisticRegression(C=1.0, class_weight="balanced").fit(X_pool_p, y_pool_p)
+            p_par = m_par.predict(X6_s[~np.isnan(y_par6[active_s6])])
+            y_true_p = y_par6[m6]
 
-        # 3.4 Zero-Shot NARMA-2
-        u_norm4 = (u_s4 - np.min(u_s4)) / (np.ptp(u_s4) if np.ptp(u_s4) > 0 else 1.0) * 0.5
-        y_narma4 = np.zeros(len(u_s4))
-        for t in range(1, len(u_s4) - 1):
-            y_narma4[t+1] = 0.4 * y_narma4[t] + 0.4 * y_narma4[t] * y_narma4[t-1] + 0.6 * (u_norm4[t] ** 3) + 0.1
+            acc = float(np.mean(p_par == y_true_p))
+            bal_acc = float(balanced_accuracy_score(y_true_p, p_par))
+            maj_rate = float(max(np.mean(y_true_p == 1.0), np.mean(y_true_p == -1.0)))
 
-        u_norm6 = (u_s6 - np.min(u_s6)) / (np.ptp(u_s6) if np.ptp(u_s6) > 0 else 1.0) * 0.5
-        y_narma6 = np.zeros(len(u_s6))
-        for t in range(1, len(u_s6) - 1):
-            y_narma6[t+1] = 0.4 * y_narma6[t] + 0.4 * y_narma6[t] * y_narma6[t-1] + 0.6 * (u_norm6[t] ** 3) + 0.1
+            parity_res[f"lag_{lag_p}"] = {
+                "accuracy": acc,
+                "balanced_accuracy": bal_acc,
+                "majority_class_rate": maj_rate,
+                "beats_majority": bool(acc > maj_rate)
+            }
 
-        m_nar = Ridge(alpha=10.0).fit(X_pool, np.concatenate([y_narma4[active_s4], y_narma4[active_s4]]))
+        # 3.4 Zero-Shot NARMA-2 on Reservoir
+        m_nar = Ridge(alpha=10.0).fit(X_pool_s, y_tr_narma)
         pred_nar6 = m_nar.predict(X6_s)
-        narma_nmse = float(np.mean((y_narma6[active_s6] - pred_nar6)**2) / np.var(y_narma6[active_s6]))
+        narma_nmse = float(np.mean((y_te_narma - pred_nar6)**2) / np.var(y_te_narma))
 
-        # Linear input baseline on Stage 6
-        m_lin = Ridge(alpha=10.0).fit(u_s4[active_s4].reshape(-1, 1), y_narma4[active_s4])
-        pred_lin6 = m_lin.predict(u_s6[active_s6].reshape(-1, 1))
-        narma_lin_nmse = float(np.mean((y_narma6[active_s6] - pred_lin6)**2) / np.var(y_narma6[active_s6]))
-
-        results[cfg_name] = {
+        cfg_summary = {
             "n_features": len(cols),
             "total_mc": float(total_mc),
+            "total_oos_mc": float(total_oos_mc),
             "null_95th": null_95th,
+            "null_mean": null_mean,
             "mc_lags": mc_lags,
-            "parity_accuracy": parity_res,
-            "narma2_nmse": narma_nmse,
-            "narma2_linear_baseline_nmse": narma_lin_nmse,
+            "parity": parity_res,
+            "narma2_reservoir_nmse": float(narma_nmse),
+            "narma2_baseline1_nmse": float(nmse_b1_15),
             "test_predictions": preds_dict,
             "narma_pred": pred_nar6.tolist(),
-            "narma_true": y_narma6[active_s6].tolist()
+            "narma_true": y_te_narma.tolist()
         }
 
+        results["configs"][cfg_name] = cfg_summary
+
         print(f"\nConfiguration: {cfg_name}")
-        print(f"  Zero-Shot Total MC (k=1..15): {total_mc:.4f} (Null 95th: {null_95th:.4f})")
-        print(f"  MC Lag-1: r2={mc_lags[0]['r2']:.4f} (r={mc_lags[0]['r']:.4f})")
-        print(f"  MC Lag-2: r2={mc_lags[1]['r2']:.4f} (r={mc_lags[1]['r']:.4f})")
-        print(f"  MC Lag-3: r2={mc_lags[2]['r2']:.4f} (r={mc_lags[2]['r']:.4f})")
-        print(f"  Zero-Shot Parity Acc: Lag-1={parity_res['lag_1']*100:.1f}%, Lag-2={parity_res['lag_2']*100:.1f}%, Lag-3={parity_res['lag_3']*100:.1f}%")
-        print(f"  Zero-Shot NARMA-2 NMSE: {narma_nmse:.4f} (vs Linear Input Baseline: {narma_lin_nmse:.4f})")
+        print(f"  Zero-Shot Total MC (k=1..15): Pearson sum = {total_mc:.4f}, OOS R² = {total_oos_mc:.4f}")
+        print(f"  Null Baseline 3 (95th %ile): {null_95th:.4f}")
+        print(f"  Lag 1-3 Pearson r: [{mc_lags[0]['r']:.3f}, {mc_lags[1]['r']:.3f}, {mc_lags[2]['r']:.3f}]")
+        print(f"  Lag 1-3 r²:        [{mc_lags[0]['r2']:.3f}, {mc_lags[1]['r2']:.3f}, {mc_lags[2]['r2']:.3f}]")
+        print(f"  Zero-Shot Parity Acc: Lag-1={parity_res['lag_1']['accuracy']*100:.1f}% (Maj: {parity_res['lag_1']['majority_class_rate']*100:.1f}%), Lag-2={parity_res['lag_2']['accuracy']*100:.1f}% (Maj: {parity_res['lag_2']['majority_class_rate']*100:.1f}%)")
+        print(f"  Zero-Shot NARMA-2 NMSE: Reservoir = {narma_nmse:.4f} vs Baseline 1 = {nmse_b1_15:.4f}")
 
     return results
 
@@ -394,9 +473,7 @@ def generate_stage6_figures(wide_interp, df_seq, step_times, clusters, df_od, df
 
     fig_paths = {}
 
-    # -------------------------------------------------------------------------
     # Fig 1: Complete Stage 6 Run Overview
-    # -------------------------------------------------------------------------
     fig, axes = plt.subplots(4, 1, figsize=(14, 11), sharex=True, gridspec_kw={"height_ratios": [1.2, 1.0, 1.0, 0.8]})
     t_w0 = step_times[0]
     t_tr0 = step_times[30]
@@ -407,7 +484,6 @@ def generate_stage6_figures(wide_interp, df_seq, step_times, clusters, df_od, df
         ax.axvspan(t_tr0, t_end, color="#fff2e6", alpha=0.5, label="Hold-Out Test (Steps 30-199, Seed 43)" if ax == axes[0] else "")
         ax.axvline(t_end, color="gray", linestyle="--", linewidth=1.2, label="Sequence End" if ax == axes[0] else "")
 
-    # Subplot 1: Dosing Pulses
     ax0 = axes[0]
     acid_c = clusters[clusters["pump"].str.contains("media", na=False) & ~clusters["pump"].str.contains("alt_media", na=False)]
     base_c = clusters[clusters["pump"].str.contains("alt_media", na=False)]
@@ -419,7 +495,6 @@ def generate_stage6_figures(wide_interp, df_seq, step_times, clusters, df_od, df
     ax0.legend(loc="upper left", fontsize=9, ncol=4)
     ax0.grid(True, alpha=0.3)
 
-    # Subplot 2: AS7341 Spectral Channels
     ax1 = axes[1]
     for b in [445, 480, 515, 555, 590, 630]:
         ax1.plot(wide_interp.index, wide_interp[b], color=BAND_COLORS[b], linewidth=1.1, label=f"{b} nm")
@@ -427,7 +502,6 @@ def generate_stage6_figures(wide_interp, df_seq, step_times, clusters, df_od, df
     ax1.legend(loc="upper left", fontsize=8, ncol=6)
     ax1.grid(True, alpha=0.3)
 
-    # Subplot 3: 555/480 Ratio
     ax2 = axes[2]
     ax2.plot(wide_interp.index, wide_interp["r_555_480"], color="#2c3e50", linewidth=1.2, label="Ratio 555 / 480 nm")
     ax2.axhspan(1.47, 1.51, color="#2ecc71", alpha=0.25, label="Target Window [1.47, 1.51]")
@@ -438,7 +512,6 @@ def generate_stage6_figures(wide_interp, df_seq, step_times, clusters, df_od, df
     ax2.legend(loc="upper left", fontsize=8, ncol=4)
     ax2.grid(True, alpha=0.3)
 
-    # Subplot 4: OD Readings
     ax3 = axes[3]
     if not df_od.empty:
         od_ch3 = df_od[df_od["channel"] == 3]
@@ -456,11 +529,8 @@ def generate_stage6_figures(wide_interp, df_seq, step_times, clusters, df_od, df
     plt.savefig(p1, dpi=300)
     plt.close()
     fig_paths["fig1"] = p1
-    print(f"  Saved Fig 1: {p1}")
 
-    # -------------------------------------------------------------------------
     # Fig 2: Carrier Baseline & Operating Window Across Stages
-    # -------------------------------------------------------------------------
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5), gridspec_kw={"width_ratios": [2.2, 1]})
     ax1.plot(wide_interp.index, wide_interp["r_555_480"], color="#34495e", lw=1.2, label="Stage 6 Trace (Seed 43)")
     ax1.axhspan(1.47, 1.51, color="#2ecc71", alpha=0.25, label="Target Window [1.47, 1.51] (pKa ~ 3.74)")
@@ -475,7 +545,6 @@ def generate_stage6_figures(wide_interp, df_seq, step_times, clusters, df_od, df
     ax1.legend(loc="upper right", fontsize=8.5)
     ax1.grid(True, alpha=0.3)
 
-    # Histogram comparison
     dosing_r = wide_interp.loc[t_tr0:t_end, "r_555_480"]
     ax2.hist(dosing_r, bins=35, color="#3498db", edgecolor="black", alpha=0.75, orientation="horizontal", density=True)
     ax2.axhspan(1.47, 1.51, color="#2ecc71", alpha=0.25)
@@ -490,21 +559,18 @@ def generate_stage6_figures(wide_interp, df_seq, step_times, clusters, df_od, df
     plt.savefig(p2, dpi=300)
     plt.close()
     fig_paths["fig2"] = p2
-    print(f"  Saved Fig 2: {p2}")
 
-    # -------------------------------------------------------------------------
     # Fig 3: Zero-Shot Time-Series Reconstructions on Unseen Sequence
-    # -------------------------------------------------------------------------
     fig, axes = plt.subplots(3, 1, figsize=(13, 8), sharex=True)
-    preds = results["Ratio555_480_6Taps"]["test_predictions"]
+    preds = results["configs"]["Ratio555_480_6Taps"]["test_predictions"]
     steps_act = np.arange(30, 200)
-    idx_win = range(20, 70)  # 50-step window
+    idx_win = range(20, 70)
 
     for i, lag in enumerate([1, 2, 3]):
         ax = axes[i]
         act = np.array(preds[lag]["actual"])
         prd = np.array(preds[lag]["predicted"])
-        corr = np.corrcoef(act, prd)[0, 1]
+        corr = np.corrcoef(act, prd)[0, 1] if np.var(prd) > 1e-12 else 0.0
         r2 = corr**2
 
         ax.plot(steps_act[idx_win], act[idx_win], color="black", marker="o", lw=1.5, markersize=4, label=f"Unseen Ground Truth Target u[t-{lag}] (Seed 43)")
@@ -521,25 +587,19 @@ def generate_stage6_figures(wide_interp, df_seq, step_times, clusters, df_od, df
     plt.savefig(p3, dpi=300)
     plt.close()
     fig_paths["fig3"] = p3
-    print(f"  Saved Fig 3: {p3}")
 
-    # -------------------------------------------------------------------------
-    # Fig 4: Hold-Out Memory Capacity Profile vs Stage 4 and Null
-    # -------------------------------------------------------------------------
+    # Fig 4: Hold-Out Memory Capacity Profile vs Baseline 1 and Null
     fig, (ax_mc, ax_bar) = plt.subplots(1, 2, figsize=(14, 5.5))
     lags = np.arange(1, 16)
 
-    res_6taps = results["Ratio555_480_6Taps"]
+    res_6taps = results["configs"]["Ratio555_480_6Taps"]
     r2_s6_zeroshot = [it["r2"] for it in res_6taps["mc_lags"]]
 
-    # Stage 4 cross-run reference
-    r2_s4_ref = [0.179, 0.119, 0.083, 0.051, 0.043, 0.035, 0.021, 0.015, 0.009, 0.005, 0.004, 0.003, 0.001, 0.000, 0.000]
-
     ax_mc.plot(lags, r2_s6_zeroshot, "o-", color="#2ecc71", lw=2.2, markersize=6, label=f"Stage 6 Zero-Shot Hold-Out (MC={res_6taps['total_mc']:.3f})")
-    ax_mc.plot(lags, r2_s4_ref, "s--", color="#3498db", lw=1.8, markersize=5, label="Stage 4 Cross-Run Reference (MC=0.568)")
-    ax_mc.axhline(res_6taps["null_95th"] / 15.0, color="red", ls="--", lw=1.2, label=f"Shuffled Null Floor (~{res_6taps['null_95th']/15.0:.3f}/lag)")
+    ax_mc.axhline(res_6taps["null_95th"] / 15.0, color="red", ls="--", lw=1.2, label=f"Circular Shift Null Floor (~{res_6taps['null_95th']/15.0:.3f}/lag)")
+    ax_mc.axhline(1.0 / results["holdout_steps"], color="gray", ls=":", lw=1.0, label=f"Analytical Floor (1/170 = {1.0/results['holdout_steps']:.3f})")
 
-    ax_mc.set_title("A. Linear Memory Capacity: Zero-Shot Transfer vs Stage 4", fontweight="bold")
+    ax_mc.set_title("A. Zero-Shot Linear Memory Capacity Profile ($r^2$ vs Lag $k$)\n[Authentic Fading Memory: Lags 1-3 r = 0.55, 0.45, 0.34]", fontweight="bold")
     ax_mc.set_xlabel("Reconstruction Lag k (Steps, Ts = 60s)", fontweight="bold")
     ax_mc.set_ylabel("Determination Coefficient r²", fontweight="bold")
     ax_mc.set_xticks(lags)
@@ -547,24 +607,22 @@ def generate_stage6_figures(wide_interp, df_seq, step_times, clusters, df_od, df
     ax_mc.legend(loc="upper right", fontsize=8.5)
     ax_mc.grid(True, alpha=0.3)
 
-    # Bar chart across feature configurations
-    cfgs = list(results.keys())
+    cfgs = list(results["configs"].keys())
     x_pos = np.arange(len(cfgs))
     w = 0.35
-    s6_totals = [results[c]["total_mc"] for c in cfgs]
-    s4_totals = [0.5679, 0.4786, 0.5309, 0.3848]  # from stage 4 replicate analysis
+    s6_totals = [results["configs"][c]["total_mc"] for c in cfgs]
+    s6_nulls = [results["configs"][c]["null_95th"] for c in cfgs]
 
-    ax_bar.bar(x_pos - w/2, s4_totals, width=w, color="#3498db", label="Stage 4 Cross-Run Benchmark")
-    ax_bar.bar(x_pos + w/2, s6_totals, width=w, color="#2ecc71", label="Stage 6 Zero-Shot Hold-Out")
-    ax_bar.axhline(0.3768, color="red", ls="--", lw=1.2, label="Shuffled Null Floor (0.377)")
+    ax_bar.bar(x_pos - w/2, s6_totals, width=w, color="#2ecc71", label="Zero-Shot Total MC (k=1..15)")
+    ax_bar.bar(x_pos + w/2, s6_nulls, width=w, color="#e74c3c", alpha=0.7, label="Circular Shift Null 95%ile")
 
-    for idx, (s4_v, s6_v) in enumerate(zip(s4_totals, s6_totals)):
-        ax_bar.text(idx + w/2, s6_v + 0.015, f"{s6_v:.3f}", ha="center", fontsize=8.5, fontweight="bold")
+    for idx, s6_v in enumerate(s6_totals):
+        ax_bar.text(idx - w/2, s6_v + 0.015, f"{s6_v:.3f}", ha="center", fontsize=8.5, fontweight="bold")
 
     ax_bar.set_xticks(x_pos)
     ax_bar.set_xticklabels([c.replace("_", "\n") for c in cfgs], fontsize=8)
-    ax_bar.set_ylabel("Total Linear Memory Capacity (k=1..15)", fontweight="bold")
-    ax_bar.set_title("B. Total Capacity Comparison Across Configurations", fontweight="bold")
+    ax_bar.set_ylabel("Total Linear Memory Capacity", fontweight="bold")
+    ax_bar.set_title("B. Total MC Across Configurations vs Shift Null", fontweight="bold")
     ax_bar.set_ylim(0, 0.80)
     ax_bar.legend(loc="upper right", fontsize=8.5)
     ax_bar.grid(True, alpha=0.3, axis="y")
@@ -574,43 +632,49 @@ def generate_stage6_figures(wide_interp, df_seq, step_times, clusters, df_od, df
     plt.savefig(p4, dpi=300)
     plt.close()
     fig_paths["fig4"] = p4
-    print(f"  Saved Fig 4: {p4}")
 
-    # -------------------------------------------------------------------------
-    # Fig 5: Nonlinear Benchmark Transfer (Parity & NARMA-2)
-    # -------------------------------------------------------------------------
+    # Fig 5: Nonlinear Benchmark Transfer (Parity vs Majority & NARMA-2 vs Baseline 1)
     fig, (ax_par, ax_nar) = plt.subplots(1, 2, figsize=(14, 5.5))
 
-    # Parity Accuracy
-    p_l1 = [results[c]["parity_accuracy"]["lag_1"] * 100 for c in cfgs]
-    p_l2 = [results[c]["parity_accuracy"]["lag_2"] * 100 for c in cfgs]
-    p_l3 = [results[c]["parity_accuracy"]["lag_3"] * 100 for c in cfgs]
+    p_l1 = [results["configs"][c]["parity"]["lag_1"]["accuracy"] * 100 for c in cfgs]
+    p_l2 = [results["configs"][c]["parity"]["lag_2"]["accuracy"] * 100 for c in cfgs]
+    p_l3 = [results["configs"][c]["parity"]["lag_3"]["accuracy"] * 100 for c in cfgs]
+
+    maj_l1 = results["configs"]["Ratio555_480_6Taps"]["parity"]["lag_1"]["majority_class_rate"] * 100
+    maj_l2 = results["configs"]["Ratio555_480_6Taps"]["parity"]["lag_2"]["majority_class_rate"] * 100
+    maj_l3 = results["configs"]["Ratio555_480_6Taps"]["parity"]["lag_3"]["majority_class_rate"] * 100
 
     w_p = 0.25
-    ax_par.bar(x_pos - w_p, p_l1, width=w_p, color="#3498db", label="Delayed Parity (Lag 1)")
-    ax_par.bar(x_pos, p_l2, width=w_p, color="#e67e22", label="Delayed Parity (Lag 2)")
-    ax_par.bar(x_pos + w_p, p_l3, width=w_p, color="#2ecc71", label="Delayed Parity (Lag 3)")
-    ax_par.axhline(50.0, color="red", ls="--", lw=1.5, label="Chance Baseline (50.0%)")
+    ax_par.bar(x_pos - w_p, p_l1, width=w_p, color="#3498db", label="Parity Lag 1")
+    ax_par.bar(x_pos, p_l2, width=w_p, color="#e67e22", label="Parity Lag 2")
+    ax_par.bar(x_pos + w_p, p_l3, width=w_p, color="#2ecc71", label="Parity Lag 3")
+
+    ax_par.axhline(maj_l1, color="#3498db", ls=":", lw=1.5, label=f"Majority Lag 1 ({maj_l1:.1f}%)")
+    ax_par.axhline(maj_l2, color="#e67e22", ls="--", lw=1.5, label=f"Majority Lag 2 ({maj_l2:.1f}%)")
+    ax_par.axhline(50.0, color="red", ls="-.", lw=1.2, label="Chance Baseline (50.0%)")
 
     ax_par.set_xticks(x_pos)
     ax_par.set_xticklabels([c.replace("_", "\n") for c in cfgs], fontsize=8)
     ax_par.set_ylabel("Zero-Shot Accuracy (%)", fontweight="bold")
-    ax_par.set_title("A. Zero-Shot Delayed Parity / XOR Generalization", fontweight="bold")
+    ax_par.set_title("A. Delayed Parity vs Trivial Majority Guessing\n[Audited: Reservoir fails to beat trivial majority class]", fontweight="bold")
     ax_par.set_ylim(40, 75)
-    ax_par.legend(loc="upper right", fontsize=8)
+    ax_par.legend(loc="upper right", fontsize=7.5)
     ax_par.grid(True, alpha=0.3, axis="y")
 
-    # NARMA-2 Time-Series Tracking on Stage 6
-    narma_pred = np.array(results["Ratio555_480_6Taps"]["narma_pred"])
-    narma_true = np.array(results["Ratio555_480_6Taps"]["narma_true"])
-    nmse_val = results["Ratio555_480_6Taps"]["narma2_nmse"]
+    # NARMA-2 vs Baseline 1
+    narma_pred = np.array(results["configs"]["Ratio555_480_6Taps"]["narma_pred"])
+    narma_true = np.array(results["configs"]["Ratio555_480_6Taps"]["narma_true"])
+    nmse_val = results["configs"]["Ratio555_480_6Taps"]["narma2_reservoir_nmse"]
+    b1_nmse = results["baseline1"]["narma2_nmse_lag15"]
+    pred_b1_15 = np.array(results["baseline1"]["pred"])
 
     ax_nar.plot(steps_act[idx_win], narma_true[idx_win], "k-", lw=2.0, label="True NARMA-2 Target (Seed 43)")
-    ax_nar.plot(steps_act[idx_win], narma_pred[idx_win], "r--", lw=1.8, label=f"Frozen Stage 4 Readout (NMSE = {nmse_val:.4f})")
+    ax_nar.plot(steps_act[idx_win], pred_b1_15[idx_win], "b-.", lw=1.5, label=f"Baseline 1: u(t..t-15) (NMSE = {b1_nmse:.4f})")
+    ax_nar.plot(steps_act[idx_win], narma_pred[idx_win], "r--", lw=1.8, label=f"Physical Reservoir (NMSE = {nmse_val:.4f})")
     ax_nar.set_xlabel("Hold-Out Timestep Index (t)", fontweight="bold")
     ax_nar.set_ylabel("NARMA-2 State y[t]", fontweight="bold")
-    ax_nar.set_title(f"B. Zero-Shot NARMA-2 Tracking on Unseen Sequence\n(39.5% error reduction relative to trivial baseline)", fontweight="bold")
-    ax_nar.legend(loc="upper right", fontsize=8.5)
+    ax_nar.set_title(f"B. Zero-Shot NARMA-2: Reservoir vs Baseline 1\n[Audited: Baseline 1 achieves >2.5x lower error than reservoir]", fontweight="bold")
+    ax_nar.legend(loc="upper right", fontsize=8.0)
     ax_nar.grid(True, alpha=0.3)
 
     plt.tight_layout()
@@ -618,35 +682,33 @@ def generate_stage6_figures(wide_interp, df_seq, step_times, clusters, df_od, df
     plt.savefig(p5, dpi=300)
     plt.close()
     fig_paths["fig5"] = p5
-    print(f"  Saved Fig 5: {p5}")
 
-    # -------------------------------------------------------------------------
-    # Fig 6: Cross-Stage Generalization Dashboard
-    # -------------------------------------------------------------------------
+    # Fig 6: Cross-Stage Audited Benchmark Dashboard
     fig, (ax_d1, ax_d2) = plt.subplots(1, 2, figsize=(14, 5.5))
 
-    stages_names = ["Stage 4\nRun 1 (Intra)", "Stage 4\nRun 2 (Intra)", "Stage 4\nCross-Run", "Stage 6\nZero-Shot"]
-    mc_compare = [0.453, 0.245, 0.568, res_6taps["total_mc"]]
-    narma_compare = [0.715, 0.765, 0.645, nmse_val]
+    stages_names = ["Stage 4\nRun 1 (Intra)", "Stage 4\nRun 2 (Intra)", "Stage 6\nZero-Shot (Hold-out)"]
+    mc_compare = [0.498, 0.245, res_6taps["total_mc"]]
+    narma_compare = [0.733, 0.765, nmse_val]
+    colors_stages = ["#95a5a6", "#bdc3c7", "#2ecc71"]
 
-    colors_stages = ["#bdc3c7", "#95a5a6", "#3498db", "#2ecc71"]
-
-    b1 = ax_d1.bar(stages_names, mc_compare, color=colors_stages, width=0.5, edgecolor="black")
+    b1 = ax_d1.bar(stages_names, mc_compare, color=colors_stages, width=0.45, edgecolor="black")
     for b, v in zip(b1, mc_compare):
         ax_d1.text(b.get_x() + b.get_width()/2, v + 0.02, f"{v:.3f}", ha="center", fontweight="bold", fontsize=9)
-    ax_d1.axhline(0.377, color="red", ls="--", lw=1.2, label="Shuffled Null Floor (0.377)")
+    ax_d1.axhline(res_6taps["null_95th"], color="red", ls="--", lw=1.2, label=f"Stage 6 Shift Null 95%ile ({res_6taps['null_95th']:.3f})")
+    ax_d1.axhline(0.375, color="gray", ls=":", lw=1.0, label="Stage 4 Null Floor (0.375)")
     ax_d1.set_ylabel("Total Linear Memory Capacity ($MC$)", fontweight="bold")
-    ax_d1.set_title("A. Memory Capacity Across Experimental Stages", fontweight="bold")
-    ax_d1.set_ylim(0, 0.80)
+    ax_d1.set_title("A. Memory Capacity Profile Across Stages\n(Stage 6 demonstrates significant memory above null floor)", fontweight="bold")
+    ax_d1.set_ylim(0, 0.85)
     ax_d1.legend(loc="upper left", fontsize=8.5)
     ax_d1.grid(True, alpha=0.3, axis="y")
 
-    b2 = ax_d2.bar(stages_names, narma_compare, color=colors_stages, width=0.5, edgecolor="black")
+    b2 = ax_d2.bar(stages_names, narma_compare, color=colors_stages, width=0.45, edgecolor="black")
     for b, v in zip(b2, narma_compare):
         ax_d2.text(b.get_x() + b.get_width()/2, v + 0.02, f"{v:.3f}", ha="center", fontweight="bold", fontsize=9)
-    ax_d2.axhline(1.0, color="red", ls="--", lw=1.2, label="Trivial Mean Predictor (1.00)")
+    ax_d2.axhline(b1_nmse, color="#2c3e50", ls="-", lw=2.0, label=f"Baseline 1: u(t..t-15) ({b1_nmse:.3f})")
+    ax_d2.axhline(1.0, color="gray", ls=":", lw=1.2, label="Baseline 2: Mean Predictor (1.000)")
     ax_d2.set_ylabel("NARMA-2 NMSE (Lower is Better)", fontweight="bold")
-    ax_d2.set_title("B. NARMA-2 Error Across Experimental Stages", fontweight="bold")
+    ax_d2.set_title("B. NARMA-2 Error Across Stages vs Protocol Baselines", fontweight="bold")
     ax_d2.set_ylim(0, 1.15)
     ax_d2.legend(loc="upper left", fontsize=8.5)
     ax_d2.grid(True, alpha=0.3, axis="y")
@@ -656,7 +718,6 @@ def generate_stage6_figures(wide_interp, df_seq, step_times, clusters, df_od, df
     plt.savefig(p6, dpi=300)
     plt.close()
     fig_paths["fig6"] = p6
-    print(f"  Saved Fig 6: {p6}")
 
     return fig_paths
 
@@ -676,15 +737,17 @@ def export_stage6_results(df_feat, results, audit, stats_buf, fig_paths):
 
     # Save MC results table
     mc_rows = []
-    for cfg_name, res in results.items():
+    for cfg_name, res in results["configs"].items():
         for item in res["mc_lags"]:
             mc_rows.append({
                 "configuration": cfg_name,
                 "n_features": res["n_features"],
                 "total_mc": res["total_mc"],
+                "total_oos_mc": res["total_oos_mc"],
                 "lag": item["lag"],
                 "r": item["r"],
                 "r2": item["r2"],
+                "oos_r2": item["oos_r2"],
                 "nmse": item["nmse"],
                 "null_95th": res["null_95th"]
             })
@@ -698,9 +761,14 @@ def export_stage6_results(df_feat, results, audit, stats_buf, fig_paths):
     summary_data = {
         "audit": audit,
         "buffer_stability": stats_buf,
+        "holdout_steps": results["holdout_steps"],
+        "baselines": {
+            "baseline1_raw_inputs": {k: v for k, v in results["baseline1"].items() if k != "pred"},
+            "baseline2_mean_predictor": results["baseline2"]
+        },
         "holdout_results": {
             cfg: {k: v for k, v in data.items() if k not in ["test_predictions", "narma_pred", "narma_true"]}
-            for cfg, data in results.items()
+            for cfg, data in results["configs"].items()
         },
         "figures": fig_paths
     }
@@ -712,9 +780,10 @@ def export_stage6_results(df_feat, results, audit, stats_buf, fig_paths):
     txt_path = os.path.join(OUTPUT_DIR, "stage6_summary.txt")
     with open(txt_path, "w", encoding="utf-8") as f:
         f.write("=" * 75 + "\n")
-        f.write("STAGE 6 HOLD-OUT EXECUTIVE REPORT: ZERO-SHOT GENERALIZATION\n")
-        f.write("Design: Unseen Sequence (Seed 43, 200 Steps, Ts=60s)\n")
+        f.write("STAGE 6 HOLD-OUT AUDITED REPORT: ZERO-SHOT GENERALIZATION\n")
+        f.write("Design: Unseen Pseudo-Random Sequence (Seed 43, 200 Steps, Ts=60s)\n")
         f.write("Evaluation: Frozen Readout Trained on Stage 4 Applied Without Refitting\n")
+        f.write("Audited against Protocol Baselines 1-3, Majority Guessing, and Standardization Leakage\n")
         f.write("=" * 75 + "\n\n")
 
         f.write("1. HYDRAULIC & PHYSICAL AUDIT\n")
@@ -726,26 +795,47 @@ def export_stage6_results(df_feat, results, audit, stats_buf, fig_paths):
         f.write(f"  - Carrier Baseline (555/480): {stats_buf['washout_mean']:.4f} ± {stats_buf['washout_std']:.4f} (Gate: PASSED)\n")
         f.write(f"  - Dynamic Range: {stats_buf['dosing_min']:.4f} to {stats_buf['dosing_max']:.4f} (Bounds: PASSED)\n\n")
 
-        f.write("2. ZERO-SHOT HOLD-OUT PERFORMANCE ACROSS FEATURE CONFIGURATIONS\n")
-        for cfg_name, res in results.items():
+        f.write("2. PROTOCOL BASELINE EVALUATION (GENUINE COMPARISONS)\n")
+        f.write(f"  - Baseline 1 (Ridge on raw delayed inputs u(t..t-15)) NARMA-2 NMSE: {results['baseline1']['narma2_nmse_lag15']:.4f}\n")
+        f.write(f"  - Baseline 1 (Ridge on raw delayed inputs u(t..t-3))  NARMA-2 NMSE: {results['baseline1']['narma2_nmse_lag3']:.4f}\n")
+        f.write(f"  - Baseline 2 (Constant Mean Predictor) NARMA-2 NMSE: 1.0000\n")
+        f.write("  - AUDIT FINDING ON NARMA-2:\n")
+        f.write("    The reservoir achieves NMSE = 0.589 - 0.605 on Stage 6. A linear ridge regression\n")
+        f.write("    fitted directly on raw delayed inputs u(t..t-15) achieves NMSE = 0.2093 (and u(t..t-3)\n")
+        f.write("    gets 0.2533). The physical reservoir loses to Baseline 1 by more than 2.5x.\n\n")
+
+        f.write("3. DELAYED PARITY / XOR AUDIT (VS TRIVIAL MAJORITY CLASSIFIER)\n")
+        for lp in [1, 2, 3]:
+            p_res = results["configs"]["Ratio555_480_6Taps"]["parity"][f"lag_{lp}"]
+            f.write(f"  - Lag {lp}: Reservoir Acc = {p_res['accuracy']*100:.1f}%, Balanced Acc = {p_res['balanced_accuracy']*100:.1f}%, Majority Rate = {p_res['majority_class_rate']*100:.1f}%\n")
+        f.write("  - AUDIT FINDING ON PARITY:\n")
+        f.write("    Because zero-sign steps are mapped to +1.0, the test sequence has a majority-class\n")
+        f.write("    rate of 60.0% - 64.1%. Predicting '+1' unconditionally achieves 64.1% (lag 1),\n")
+        f.write("    60.0% (lag 2), and 62.9% (lag 3). The reservoir scores at or below the trivial\n")
+        f.write("    classifier on every lag. The protocol's 'vs 50% chance' does not apply.\n\n")
+
+        f.write("4. ZERO-SHOT HOLD-OUT MEMORY CAPACITY\n")
+        for cfg_name, res in results["configs"].items():
             f.write(f"  Configuration: {cfg_name}\n")
             f.write(f"    Features: {res['n_features']}\n")
-            f.write(f"    Total Zero-Shot MC (k=1..15): {res['total_mc']:.4f} (Null 95th: {res['null_95th']:.4f})\n")
+            f.write(f"    Total Zero-Shot MC (k=1..15): Pearson sum = {res['total_mc']:.4f}, OOS R² sum = {res['total_oos_mc']:.4f}\n")
+            f.write(f"    Baseline 3 Circular Shift Null (95th %ile): {res['null_95th']:.4f} (Null mean: {res['null_mean']:.4f})\n")
             f.write(f"    Lag-1 MC: r2={res['mc_lags'][0]['r2']:.4f} (corr r={res['mc_lags'][0]['r']:.4f})\n")
             f.write(f"    Lag-2 MC: r2={res['mc_lags'][1]['r2']:.4f} (corr r={res['mc_lags'][1]['r']:.4f})\n")
             f.write(f"    Lag-3 MC: r2={res['mc_lags'][2]['r2']:.4f} (corr r={res['mc_lags'][2]['r']:.4f})\n")
-            f.write(f"    Zero-Shot Parity Accuracy: Lag-1={res['parity_accuracy']['lag_1']*100:.1f}%, Lag-2={res['parity_accuracy']['lag_2']*100:.1f}%, Lag-3={res['parity_accuracy']['lag_3']*100:.1f}%\n")
-            f.write(f"    Zero-Shot NARMA-2 NMSE: {res['narma2_nmse']:.4f} (vs Linear Input Baseline: {res['narma2_linear_baseline_nmse']:.4f})\n\n")
+            f.write(f"    Zero-Shot NARMA-2 NMSE: {res['narma2_reservoir_nmse']:.4f} (vs Baseline 1: {res['narma2_baseline1_nmse']:.4f})\n\n")
 
-        f.write("3. PROTOCOL SECTION 9 DECISION RULE VERDICT\n")
-        f.write("  - Protocol Criterion: 'If the test score is close to the Stage 4 test score,\n")
-        f.write("    the readout is stable over hours and days. If it drops sharply, drift is limiting.'\n")
-        f.write(f"  - Observed Result: Zero-shot MC reached {results['Ratio555_480_6Taps']['total_mc']:.4f} (Stage 4 was 0.5679).\n")
-        f.write("  - NARMA-2 NMSE improved from 0.6453 to 0.6048.\n")
-        f.write("  - VERDICT: PASSED WITH FLYING COLORS. The reservoir demonstrates true zero-shot cross-sequence generalization without refitting.\n")
+        f.write("5. EXECUTIVE SUMMARY & VERDICT\n")
+        f.write("  - Authentic Finding: The chemical reservoir demonstrates statistically significant\n")
+        f.write("    fading memory restricted to lags 1 to 3 (Pearson r = 0.55, 0.45, 0.34, p < 0.001)\n")
+        f.write("    on unseen pseudo-random inputs without refitting (total MC = 0.654 vs null 0.098).\n")
+        f.write("  - Scientific Caveats:\n")
+        f.write("    1. Total MC (0.654) falls substantially below the protocol expectation of 2.0 - 4.0.\n")
+        f.write("    2. On NARMA-2, the reservoir loses to linear delayed inputs (NMSE 0.589 vs 0.209).\n")
+        f.write("    3. On Delayed Parity, the reservoir fails to outperform trivial majority-class guessing.\n")
 
     print(f"Saved Executive Text Report: {txt_path}")
-    print("\nSTAGE 6 ANALYSIS COMPLETE SUCCESSFULLY.")
+    print("\nSTAGE 6 HOLD-OUT AUDITED ANALYSIS COMPLETE.")
 
 
 # -----------------------------------------------------------------------------

@@ -3,17 +3,17 @@
 stage3_parameter_selection.py — Stage 3 Parameter Selection & Benchmark Sequence Generator
 for Chemical Reservoir Computing (Methyl Orange, Pioreactor CSTR).
 
-Follows Section 6 of the Benchmarking Protocol:
-  Rule 1: v_max selection (80% overshoot dF rule, inside [1.40, 1.58])
-  Rule 2: Level size dv = v_max / 4 (9 levels {-4..+4} vs 7 levels {-3..+3}, 5-sigma check)
-  Rule 3: Decay check (compare tau with hydraulic residence time V/Q)
-  Rule 4: Step length T_s = tau / 3
+Audited & Grounded in Measured Hydraulics:
+  - Rule 1: v_max selection (80% overshoot dF rule vs linear gain)
+  - Rule 2: Level size dv = v_max / 4 (checks Delta F_step >= 0.007, flags failures)
+  - Rule 3: Decay check (compares tau directly against measured hydraulics from Stage 1)
+  - Rule 4: Step length T_s = tau / 3 (derives target 40-50s vs nominal 60s)
 
 Generates:
-  - stage4_sequence_600steps.csv (with columns: step, level, volume_mL, acid_or_base, segment)
+  - stage4_sequence_600steps.csv
   - stage4_planned_inputs.json
-  - stage3_parameters.json & stage3_parameter_report.txt
-  - Publication-ready diagnostic figures (parameter selection & sequence preview)
+  - stage3_parameters.json & stage3_parameter_report.txt / .md
+  - Diagnostic figures (parameter selection & sequence preview)
 """
 
 import sys
@@ -22,7 +22,13 @@ import random
 from pathlib import Path
 import numpy as np
 import pandas as pd
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+
+# UTF-8 stdout protection
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 plt.rcParams.update({
     "figure.dpi": 130,
@@ -39,109 +45,119 @@ plt.rcParams.update({
 
 def main():
     root = Path("CRC")
-    out_dir = root / "results_stage3"
-    figdir = out_dir / "figures"
+    out_dir = root / "results" / "stage03"
     out_dir.mkdir(parents=True, exist_ok=True)
+    figdir = out_dir / "figures"
     figdir.mkdir(parents=True, exist_ok=True)
     
-    print("="*75)
-    print("STAGE 3: BENCHMARK RUN PARAMETER SELECTION & SEQUENCE GENERATOR")
-    print("="*75)
-    
+    # Also support alias directory
+    out_dir_alias = root / "results_stage3"
+    out_dir_alias.mkdir(parents=True, exist_ok=True)
+    (out_dir_alias / "figures").mkdir(parents=True, exist_ok=True)
+
+    print("=" * 75)
+    print("STAGE 3: BENCHMARK RUN PARAMETER SELECTION & SEQUENCE GENERATOR (AUDITED)")
+    print("=" * 75)
+
     # --------------------------------------------------------------------------
     # 1. LOAD EMPIRICAL BENCHMARKS FROM STAGE 1 & STAGE 2
     # --------------------------------------------------------------------------
-    # Load Stage 2 Combined (Block A)
-    comb_summary_path = root / "results_stage2_combined" / "summary.json"
-    with open(comb_summary_path, "r", encoding="utf-8") as f:
-        stage2_summary = json.load(f)
-        
-    # Load Stage 2 Block B & C
-    blockBC_path = root / "results_stage2_blockB_and_C" / "summary.json"
+    # Stage 1: Measured Hydraulics
+    stage1_report_path = root / "results" / "stage01" / "baseline_report.json"
+    if not stage1_report_path.exists():
+        raise FileNotFoundError(f"Missing {stage1_report_path}")
+    with open(stage1_report_path, "r", encoding="utf-8") as f:
+        s1_data = json.load(f)["stage1_long"]
+
+    hyd = s1_data["hydraulics"]
+    Q_meas = float(hyd["Q_mean"])                       # 4.0 mL/min
+    tau_V_over_Q = float(hyd["tau_from_V_over_Q_min"])   # 2.5 min = 150 s
+    tau_step_fit = float(hyd["tau_step_fit_min"])       # 1.99 min = 119.4 s
+    V_eff = float(hyd["effective_mixed_volume_mL"])      # 7.96 mL
+    sigma0 = float(s1_data["noise_sd_median_of_5min_bins"]) # ~0.0017
+    noise_5sigma = 5.0 * sigma0
+
+    # Stage 2 Block A: Linear Calibration Gains
+    blockA_path = root / "results" / "stage 02 - block A" / "summary.json"
+    with open(blockA_path, "r", encoding="utf-8") as f:
+        s2_blockA = json.load(f)
+    g_acid = s2_blockA["gain_models"]["acid"]["slope_per_mL"] # ~0.0649 ratio/mL
+    g_base = s2_blockA["gain_models"]["base"]["slope_per_mL"] # ~0.1782 ratio/mL
+
+    # Stage 2 Block B: Measured Overshoot Deflections
+    blockBC_path = root / "results" / "stage 02 - blocks B & C" / "summary.json"
     with open(blockBC_path, "r", encoding="utf-8") as f:
-        blockBC_summary = json.load(f)
-        
-    g_acid = stage2_summary["gain_models"]["acid"]["slope_per_mL"] # ~0.065 ratio/mL
-    g_base = stage2_summary["gain_models"]["base"]["slope_per_mL"] # ~0.178 ratio/mL
-    
-    acid_overshoot_dF = blockBC_summary["stage3_recommendation"]["acid_overshoot_mean"] # ~0.0216
-    base_overshoot_dF = blockBC_summary["stage3_recommendation"]["base_overshoot_mean"] # ~0.0098
-    
-    # Noise floor from baseline runs
-    sigma0 = 0.0020
-    noise_5sigma = 5.0 * sigma0 # 0.0100
-    
-    # Residence time tau:
-    # Hydraulic V / Q: V = 10 mL, Q ~ 3.3 mL/min => tau ~ 3.0 min = 180 s
-    tau_sec = 180.0
-    tau_min = 3.0
-    
+        s2_blockBC = json.load(f)
+    acid_overshoot_dF = abs(s2_blockBC["block_b"]["acid_0.50"]["amp_mean"]) # ~0.0203
+    base_overshoot_dF = abs(s2_blockBC["block_b"]["base_0.50"]["amp_mean"]) # ~0.0078
+
     # --------------------------------------------------------------------------
-    # 2. APPLY RULE 1: v_max SELECTION
+    # 2. APPLY RULE 1: v_max SELECTION & ASYMMETRY
     # --------------------------------------------------------------------------
-    # 80% rule: target peak dF = 0.80 * overshoot_dF
-    target_dF_acid = 0.80 * acid_overshoot_dF # ~0.0173
-    target_dF_base = 0.80 * base_overshoot_dF # ~0.0078
-    
-    # Volume required under linear gain:
-    v_max_acid_raw = target_dF_acid / g_acid # ~0.266 mL
-    v_max_base_raw = target_dF_base / g_base # ~0.044 mL
-    
-    # Asymmetry check:
-    asymmetry_ratio = g_base / g_acid # ~2.74
+    target_dF_acid = 0.80 * acid_overshoot_dF # 0.80 * 0.0203 = ~0.0162
+    target_dF_base = 0.80 * base_overshoot_dF # 0.80 * 0.0078 = ~0.0062
+
+    v_max_acid_raw = target_dF_acid / g_acid  # ~0.250 mL
+    v_max_base_raw = target_dF_base / g_base  # ~0.035 mL (or 0.044 mL with earlier 0.0098)
+
+    asymmetry_ratio = g_base / g_acid         # ~2.75x
+
+    # In operational execution:
+    # Acid: capped at 0.20 mL (largest tested linear volume from Block A)
+    # Base: set to 0.08 mL to attempt symmetric deflection (~0.0142)
+    v_max_acid = 0.20
+    v_max_base = 0.08
+    expected_peak_acid = g_acid * v_max_acid # ~0.0130
+    expected_peak_base = g_base * v_max_base # ~0.0143
+
+    # Audit Note on v_max_base:
+    v_max_base_discrepancy = expected_peak_base > base_overshoot_dF
+
     print(f"\n[Rule 1] v_max and Asymmetry Evaluation:")
-    print(f"  Acid linear gain: {g_acid:.4f} ratio/mL | Overshoot dF: {acid_overshoot_dF:.4f}")
-    print(f"  Base linear gain: {g_base:.4f} ratio/mL | Overshoot dF: {base_overshoot_dF:.4f}")
-    print(f"  Asymmetry ratio (Base / Acid): {asymmetry_ratio:.2f}x")
-    
-    # Because asymmetry is large (2.74x), we provide two options:
-    # Option 1: Equal Response Scaling (Symmetric dF peak ~0.014):
-    #   Acid: v_max = 0.20 mL (peak dF ~ 0.0132)
-    #   Base: v_max = 0.08 mL (peak dF ~ 0.0142)
-    # Option 2: Symmetric Volume (Standard 0.20 mL for both):
-    #   Acid: v_max = 0.20 mL
-    #   Base: v_max = 0.20 mL (reaches 0.039 ratio change)
-    
-    # We choose Option 1 (Scaled) as PRIMARY (recommended by protocol rule 1),
-    # and provide Option 2 (Uniform) as alternative.
-    v_max_acid = 0.20 # mL (largest tested linear volume)
-    v_max_base = 0.08 # mL (scaled for equal optical deflection)
-    
+    print(f"  Acid gain: {g_acid:.4f}/mL | 80% Overshoot target: {target_dF_acid:.4f} -> v_max_raw = {v_max_acid_raw:.3f} mL")
+    print(f"  Base gain: {g_base:.4f}/mL | 80% Overshoot target: {target_dF_base:.4f} -> v_max_raw = {v_max_base_raw:.3f} mL")
+    print(f"  Selected v_max: Acid = {v_max_acid:.2f} mL, Base = {v_max_base:.2f} mL")
+    print(f"  CRITICAL NOTE: v_max_base (0.08 mL) gives expected peak {expected_peak_base:.4f}, which exceeds measured 0.5 mL overshoot ({base_overshoot_dF:.4f}).")
+
     # --------------------------------------------------------------------------
-    # 3. APPLY RULE 2: LEVEL SIZE & 5-SIGMA CHECK
+    # 3. APPLY RULE 2: LEVEL SIZE & 5-SIGMA SEPARATION CHECK
     # --------------------------------------------------------------------------
     # 9 levels: {-4, -3, -2, -1, 0, 1, 2, 3, 4}
-    # Acid steps (levels +1 to +4):
-    dv_acid = v_max_acid / 4.0 # 0.050 mL = 50 uL
-    # Base steps (levels -1 to -4):
-    dv_base = v_max_base / 4.0 # 0.020 mL = 20 uL
-    
-    dF_step_acid = dv_acid * g_acid # ~0.0033
-    dF_step_base = dv_base * g_base # ~0.0036
-    
-    # Level separation across 2 level steps (e.g. from level 1 to level 3): ~0.007
-    # Full range (Level 4): Acid ~0.0132 (>5sigma), Base ~0.0142 (>5sigma)
-    n_levels = 9
-    levels_range = [-4, -3, -2, -1, 0, 1, 2, 3, 4]
-    
-    print(f"\n[Rule 2] Level Size & Discretization (9 Levels: -4 to +4):")
-    print(f"  Acid v_max = {v_max_acid:.2f} mL -> step size dv_acid = {dv_acid*1000:.1f} uL ({dv_acid:.3f} mL)")
-    print(f"  Base v_max = {v_max_base:.2f} mL -> step size dv_base = {dv_base*1000:.1f} uL ({dv_base:.3f} mL)")
-    print(f"  Acid step dF: {dF_step_acid:.4f} | Base step dF: {dF_step_base:.4f}")
-    
+    dv_acid = v_max_acid / 4.0 # 0.050 mL
+    dv_base = v_max_base / 4.0 # 0.020 mL
+
+    dF_step_acid = dv_acid * g_acid # 0.050 * 0.0649 = ~0.0032
+    dF_step_base = dv_base * g_base # 0.020 * 0.1782 = ~0.0036
+
+    rule2_target_dF = 0.0070
+    rule2_acid_pass = bool(dF_step_acid >= rule2_target_dF)
+    rule2_base_pass = bool(dF_step_base >= rule2_target_dF)
+    rule2_pass = rule2_acid_pass and rule2_base_pass
+
+    print(f"\n[Rule 2] Level Size & Noise Separation Check (Target: Delta F_step >= {rule2_target_dF:.4f}):")
+    print(f"  Acid step size: {dv_acid*1000:.1f} uL -> Expected Delta F_step = {dF_step_acid:.4f} [{'PASS' if rule2_acid_pass else 'FAIL'}]")
+    print(f"  Base step size: {dv_base*1000:.1f} uL -> Expected Delta F_step = {dF_step_base:.4f} [{'PASS' if rule2_base_pass else 'FAIL'}]")
+    print(f"  Rule 2 Overall: {'PASSED' if rule2_pass else 'FAILED'}")
+    if not rule2_pass:
+        print("  CONSEQUENCE: Step deflections (~0.0034) are below the 0.007 plan threshold.")
+        print(f"  At measured within-level noise sigma = {sigma0:.4f}, step separation is only {dF_step_acid/sigma0:.1f} sigma.")
+        print("  Reagents require ~2.2x - 2.5x higher concentration, or level count should be reduced from 9 to 5.")
+
     # --------------------------------------------------------------------------
     # 4. APPLY RULE 3 & RULE 4: DECAY CHECK & STEP LENGTH T_s
     # --------------------------------------------------------------------------
-    # Rule 3: Decay check
-    # Hydraulic tau ~ 3.0 min. Measured exponential decay tau ~ 2.5 - 3.5 min.
-    # Within 20% of hydraulic tau -> stirred tank mixing is verified!
-    # Rule 4: T_s = tau / 3 = 180 s / 3 = 60.0 s
-    T_s_sec = 60.0
-    T_s_min = T_s_sec / 60.0
+    # Step length from measured hydraulics:
+    T_s_from_stepfit = (tau_step_fit * 60.0) / 3.0   # 39.8 s
+    T_s_from_V_over_Q = (tau_V_over_Q * 60.0) / 3.0  # 50.0 s
+    T_s_operational = 60.0                            # Nominal Ts used in Stage 4/5/6
+
     print(f"\n[Rule 3 & 4] Hydraulics and Step Length T_s:")
-    print(f"  Decay constant tau: {tau_min:.1f} min ({tau_sec:.0f} s)")
-    print(f"  Step length T_s = tau / 3 = {T_s_sec:.0f} seconds ({T_s_min:.1f} min)")
-    
+    print(f"  Stage 1 Measured Q: {Q_meas:.2f} mL/min | V_eff = {V_eff:.2f} mL")
+    print(f"  Hydraulic tau (V/Q): {tau_V_over_Q:.2f} min ({tau_V_over_Q*60:.1f} s)")
+    print(f"  Empirical Step-Fit tau: {tau_step_fit:.2f} min ({tau_step_fit*60:.1f} s)")
+    print(f"  Rule 4 Target Step Length (tau / 3): {T_s_from_stepfit:.1f} s (step-fit) to {T_s_from_V_over_Q:.1f} s (V/Q)")
+    print(f"  Operational Step Length Used: {T_s_operational:.1f} s (T_s / tau_meas = {T_s_operational/(tau_step_fit*60):.2f}x)")
+
     # --------------------------------------------------------------------------
     # 5. GENERATE STAGE 4 BENCHMARK SEQUENCE (N = 600 STEPS, SEED = 42)
     # --------------------------------------------------------------------------
@@ -150,13 +166,9 @@ def main():
     N_WASHOUT = 30
     N_TRAIN = 400
     N_TEST = 170
-    
+    levels_range = [-4, -3, -2, -1, 0, 1, 2, 3, 4]
+
     rng = random.Random(SEED)
-    
-    # Washout: steps 0 to 29 (all level 0)
-    # Train: steps 30 to 429 (uniform random over {-4..+4})
-    # Test: steps 430 to 599 (uniform random over {-4..+4})
-    
     records = []
     for step in range(N_STEPS):
         if step < N_WASHOUT:
@@ -168,15 +180,12 @@ def main():
         else:
             segment = "test"
             level = rng.choice(levels_range)
-            
-        # Determine volume and reagent
+
         if level > 0:
-            # Positive = Acid
             reagent = "acid"
             vol = level * dv_acid
             pump = "add_media"
         elif level < 0:
-            # Negative = Base
             reagent = "base"
             vol = abs(level) * dv_base
             pump = "add_alt_media"
@@ -184,236 +193,192 @@ def main():
             reagent = "none"
             vol = 0.0
             pump = "none"
-            
-        t_scheduled_sec = step * T_s_sec
-        t_scheduled_min = t_scheduled_sec / 60.0
-        
+
+        t_scheduled_sec = step * T_s_operational
         records.append({
             "step": step,
             "segment": segment,
             "t_offset_s": t_scheduled_sec,
-            "t_offset_min": t_scheduled_min,
+            "t_offset_min": t_scheduled_sec / 60.0,
             "level": level,
             "acid_or_base": reagent,
             "volume_mL": round(vol, 4),
             "pump": pump
         })
-        
+
     df_seq = pd.DataFrame(records)
-    
-    # Save sequence files
-    seq_csv = out_dir / "stage4_sequence_600steps.csv"
-    df_seq.to_csv(seq_csv, index=False)
-    
-    # Save JSON schedule
-    seq_json = out_dir / "stage4_planned_inputs.json"
-    seq_json.write_text(json.dumps(records, indent=2), encoding="utf-8")
-    
-    # Save comma-separated sequences for Pioreactor pump commands
-    acid_seq_str = ",".join(str(r["volume_mL"]) if r["acid_or_base"] == "acid" else "0.0" for r in records)
-    base_seq_str = ",".join(str(r["volume_mL"]) if r["acid_or_base"] == "base" else "0.0" for r in records)
-    (out_dir / "volume_sequence_acid.txt").write_text(acid_seq_str + "\n", encoding="utf-8")
-    (out_dir / "volume_sequence_base.txt").write_text(base_seq_str + "\n", encoding="utf-8")
-    
+
+    # Save to both stage03 and alias directory
+    for od in [out_dir, out_dir_alias]:
+        df_seq.to_csv(od / "stage4_sequence_600steps.csv", index=False)
+        (od / "stage4_planned_inputs.json").write_text(json.dumps(records, indent=2), encoding="utf-8")
+
+        # Save 200-step prefix for legacy reference (30 washout + 130 train + 40 test)
+        df_200 = df_seq.iloc[:200].copy()
+        df_200.loc[df_200["step"] >= 160, "segment"] = "test"
+        df_200.to_csv(od / "stage4_sequence_200steps.csv", index=False)
+
+        acid_seq_str = ",".join(str(r["volume_mL"]) if r["acid_or_base"] == "acid" else "0.0" for r in records)
+        base_seq_str = ",".join(str(r["volume_mL"]) if r["acid_or_base"] == "base" else "0.0" for r in records)
+        (od / "volume_sequence_acid.txt").write_text(acid_seq_str + "\n", encoding="utf-8")
+        (od / "volume_sequence_base.txt").write_text(base_seq_str + "\n", encoding="utf-8")
+
     # --------------------------------------------------------------------------
-    # 6. LOGISTICS CALCULATION (RUN DURATION & CHEMICAL INVENTORY)
+    # 6. LOGISTICS CALCULATION
     # --------------------------------------------------------------------------
-    total_time_h = (N_STEPS * T_s_sec + 20 * 60 + 20 * 60) / 3600.0 # 600 steps + 20m pre + 20m post
+    total_time_h = (N_STEPS * T_s_operational + 40 * 60) / 3600.0
     total_acid_vol_mL = df_seq[df_seq["acid_or_base"] == "acid"]["volume_mL"].sum()
     total_base_vol_mL = df_seq[df_seq["acid_or_base"] == "base"]["volume_mL"].sum()
-    carrier_flow_rate = 3.33 # mL/min
-    total_carrier_L = (carrier_flow_rate * (total_time_h * 60.0)) / 1000.0
-    
-    print(f"\n[Stage 4 Logistics]:")
-    print(f"  Total steps: {N_STEPS} (Washout: {N_WASHOUT}, Train: {N_TRAIN}, Test: {N_TEST})")
-    print(f"  Total run duration: {total_time_h:.2f} hours (including 20 min pre/post baselines)")
-    print(f"  Total Acid stock required: {total_acid_vol_mL:.2f} mL")
-    print(f"  Total Base stock required: {total_base_vol_mL:.2f} mL")
-    print(f"  Total Carrier buffer consumed: {total_carrier_L:.2f} Liters (at 3.3 mL/min)")
-    
+    total_carrier_L = (Q_meas * (total_time_h * 60.0)) / 1000.0
+
+    print(f"\n[Logistics for Full 600-Step Run]:")
+    print(f"  Duration: {total_time_h:.2f} hours (with 20 min pre/post baselines)")
+    print(f"  Acid required: {total_acid_vol_mL:.2f} mL | Base required: {total_base_vol_mL:.2f} mL")
+    print(f"  Carrier consumed (at Q={Q_meas:.1f} mL/min): {total_carrier_L:.2f} L")
+
     # --------------------------------------------------------------------------
     # 7. GENERATE DIAGNOSTIC FIGURES
     # --------------------------------------------------------------------------
-    print("\n[Step 7] Rendering diagnostic figures...")
-    
-    # Figure 1: Parameter Selection & Operating Envelope
     fig1, axes1 = plt.subplots(1, 3, figsize=(18, 5))
-    
-    # 1A. Asymmetry Scaling & Operating Window
+
+    # 1A. Asymmetry Scaling
     ax = axes1[0]
     v_arr = np.linspace(0, 0.25, 100)
     ax.plot(v_arr, g_acid * v_arr, 'r-', lw=2.2, label=f"Acid Gain ({g_acid:.3f}/mL)")
     ax.plot(v_arr, g_base * v_arr, 'b-', lw=2.2, label=f"Base Gain ({g_base:.3f}/mL)")
-    ax.axhline(target_dF_acid, color='r', ls=':', label=f"Acid 80% Overshoot ({target_dF_acid:.4f})")
-    ax.axhline(target_dF_base, color='b', ls=':', label=f"Base 80% Overshoot ({target_dF_base:.4f})")
-    ax.scatter([v_max_acid], [g_acid * v_max_acid], color='r', s=90, zorder=5, label=f"Acid v_max={v_max_acid:.2f}mL")
-    ax.scatter([v_max_base], [g_base * v_max_base], color='b', s=90, zorder=5, label=f"Base v_max={v_max_base:.2f}mL")
+    ax.axhline(target_dF_acid, color='r', ls=':', label=f"Acid 80% Target ({target_dF_acid:.4f})")
+    ax.axhline(target_dF_base, color='b', ls=':', label=f"Base 80% Target ({target_dF_base:.4f})")
+    ax.scatter([v_max_acid], [expected_peak_acid], color='r', s=90, zorder=5, label=f"Acid v_max={v_max_acid:.2f}mL")
+    ax.scatter([v_max_base], [expected_peak_base], color='b', s=90, zorder=5, label=f"Base v_max={v_max_base:.2f}mL")
     ax.set_xlabel("Pulse Volume (mL)")
-    ax.set_ylabel("Expected Peak |ΔRatio|")
+    ax.set_ylabel("Expected Peak |Delta Ratio|")
     ax.set_title("A. Operating Envelope & Asymmetry Balance", fontsize=11, fontweight="bold")
     ax.legend(loc="upper left", fontsize=8.0)
-    
-    # 1B. Discrete Levels Mapping {-4..+4} to Physical Doses
+
+    # 1B. Discrete Levels
     ax = axes1[1]
     levels = np.array(levels_range)
-    vols = []
-    for l in levels:
-        if l > 0: vols.append(l * dv_acid)
-        elif l < 0: vols.append(-abs(l) * dv_base)
-        else: vols.append(0.0)
-    vols = np.array(vols)
-    
+    vols = np.array([l * dv_acid if l > 0 else (-abs(l) * dv_base if l < 0 else 0.0) for l in levels])
     colors = ['#1f77b4' if l < 0 else ('#d62728' if l > 0 else 'gray') for l in levels]
     bars = ax.bar(levels, vols, color=colors, alpha=0.85, edgecolor='k')
     for b, v in zip(bars, vols):
         if abs(v) > 0:
             ax.text(b.get_x() + b.get_width()/2, v + (0.008 if v > 0 else -0.015),
                     f"{abs(v)*1000:.0f}uL", ha='center', fontsize=8, fontweight='bold')
-    ax.set_xlabel("Discrete Input Level (u[k])")
+    ax.set_xlabel("Discrete Input Level u[k]")
     ax.set_ylabel("Injected Dose Volume (mL)")
     ax.set_title("B. 9-Level Discrete Dosing Palette", fontsize=11, fontweight="bold")
     ax.axhline(0, color='k', lw=0.8)
-    
-    # 1C. Expected Optical Step Size vs Noise Floor
+
+    # 1C. Expected Optical Step Size vs Rule 2
     ax = axes1[2]
     expected_dF = np.array([abs(l) * (dF_step_acid if l > 0 else dF_step_base) for l in levels])
     ax.bar(levels, expected_dF, color=colors, alpha=0.85, edgecolor='k')
-    ax.axhline(noise_5sigma, color='darkgreen', ls='--', lw=1.8, label=f"5-Sigma Noise Threshold ({noise_5sigma:.4f})")
-    ax.axhline(sigma0, color='gray', ls=':', lw=1.2, label=f"1-Sigma Noise Floor ({sigma0:.4f})")
-    ax.set_xlabel("Discrete Input Level (u[k])")
-    ax.set_ylabel("Expected Peak |ΔRatio|")
-    ax.set_title("C. Signal Sensitivity vs Noise Floor", fontsize=11, fontweight="bold")
-    ax.legend(loc="upper left", fontsize=8.5)
-    
+    ax.axhline(rule2_target_dF, color='darkred', ls='-', lw=2.0, label=f"Rule 2 Target Delta F >= {rule2_target_dF:.4f} [FAILED]")
+    ax.axhline(noise_5sigma, color='darkgreen', ls='--', lw=1.5, label=f"5-Sigma Noise ({noise_5sigma:.4f})")
+    ax.axhline(sigma0, color='gray', ls=':', lw=1.2, label=f"1-Sigma Noise ({sigma0:.4f})")
+    ax.set_xlabel("Discrete Input Level u[k]")
+    ax.set_ylabel("Expected Peak |Delta Ratio|")
+    ax.set_title("C. Signal Sensitivity vs Noise & Rule 2 Gate", fontsize=11, fontweight="bold")
+    ax.legend(loc="upper left", fontsize=8.0)
+
     fig1.tight_layout()
     fig1.savefig(figdir / "fig_stage3_parameter_selection.png", bbox_inches="tight")
+    fig1.savefig(out_dir_alias / "figures" / "fig_stage3_parameter_selection.png", bbox_inches="tight")
     plt.close(fig1)
-    print("  Saved: fig_stage3_parameter_selection.png")
-    
-    # Figure 2: Sequence Preview (600 Steps)
-    fig2, axes2 = plt.subplots(2, 1, figsize=(16, 8), gridspec_kw={'height_ratios': [2.2, 1]})
-    
-    # 2A. Timeline of Injected Volumes
-    ax = axes2[0]
-    t_min = df_seq["t_offset_min"].values
-    levels = df_seq["level"].values
-    
-    # Shading for segments
-    ax.axvspan(0, N_WASHOUT * T_s_min, color='gray', alpha=0.15, label="Washout (Steps 0-29)")
-    ax.axvspan(N_WASHOUT * T_s_min, (N_WASHOUT + N_TRAIN) * T_s_min, color='lightblue', alpha=0.2, label="Train (Steps 30-429)")
-    ax.axvspan((N_WASHOUT + N_TRAIN) * T_s_min, N_STEPS * T_s_min, color='orange', alpha=0.15, label="Test (Steps 430-599)")
-    
-    # Stem plot of pulses
-    for s_idx, row in df_seq.iterrows():
-        lvl = row["level"]
-        if lvl != 0:
-            c = '#d62728' if lvl > 0 else '#1f77b4'
-            ax.vlines(row["t_offset_min"], 0, lvl, color=c, lw=1.2, alpha=0.8)
-            ax.plot(row["t_offset_min"], lvl, 'o', color=c, ms=3.5, alpha=0.85)
-            
-    ax.set_ylabel("Discrete Input Level u[k]")
-    ax.set_title(f"A. Stage 4 Sequence Timeline (N = {N_STEPS} steps, T_s = {T_s_sec:.0f}s, Seed = {SEED})", fontsize=11, fontweight="bold")
-    ax.legend(loc="upper right", fontsize=8.5)
-    ax.set_xlim(-5, N_STEPS * T_s_min + 5)
-    ax.set_yticks(levels_range)
-    
-    # 2B. Level Distribution (Histogram)
-    ax = axes2[1]
-    train_counts = [list(df_seq[df_seq["segment"]=="train"]["level"]).count(l) for l in levels_range]
-    test_counts = [list(df_seq[df_seq["segment"]=="test"]["level"]).count(l) for l in levels_range]
-    
-    x = np.arange(len(levels_range))
-    w = 0.38
-    ax.bar(x - w/2, train_counts, width=w, color='#1f77b4', alpha=0.85, label=f"Train (N={N_TRAIN})", edgecolor='k')
-    ax.bar(x + w/2, test_counts, width=w, color='#ff7f0e', alpha=0.85, label=f"Test (N={N_TEST})", edgecolor='k')
-    ax.set_xticks(x)
-    ax.set_xticklabels(levels_range, fontweight='bold')
-    ax.set_xlabel("Discrete Level")
-    ax.set_ylabel("Count")
-    ax.set_title("B. Uniform Symbol Distribution Across Train and Test Splits", fontsize=11, fontweight="bold")
-    ax.legend(loc="upper right", fontsize=8.5)
-    
-    fig2.tight_layout()
-    fig2.savefig(figdir / "fig_stage4_sequence_preview.png", bbox_inches="tight")
-    plt.close(fig2)
-    print("  Saved: fig_stage4_sequence_preview.png")
-    
+
     # --------------------------------------------------------------------------
-    # 8. WRITE DETAILED REPORT & JSON SPECIFICATION
+    # 8. WRITE DETAILED AUDITED REPORT & JSON
     # --------------------------------------------------------------------------
     report_lines = [
-        "STAGE 3: BENCHMARK PARAMETER SELECTION REPORT",
-        "="*75,
+        "STAGE 3: BENCHMARK PARAMETER SELECTION REPORT (AUDITED)",
+        "=" * 75,
         "",
-        "1. RULE 1: MAXIMUM PULSE VOLUME (v_max)",
-        "-"*75,
-        f"  - Acid 80% Overshoot Target dF:  {target_dF_acid:.4f} (overshoot: {acid_overshoot_dF:.4f})",
-        f"  - Base 80% Overshoot Target dF:  {target_dF_base:.4f} (overshoot: {base_overshoot_dF:.4f})",
-        f"  - Linear Calibration Gains:      Acid = {g_acid:.4f} ratio/mL, Base = {g_base:.4f} ratio/mL",
-        f"  - Asymmetry Factor (Base/Acid):  {asymmetry_ratio:.2f}x (Base is ~2.7x more potent)",
-        f"  - Selected v_max (Scaled):",
-        f"      Acid v_max = {v_max_acid:.2f} mL (200 uL) -> Expected peak dF = {g_acid*v_max_acid:.4f}",
-        f"      Base v_max = {v_max_base:.2f} mL (80 uL)  -> Expected peak dF = {g_base*v_max_base:.4f}",
-        f"      -> Delivers balanced bipolar excursions (|dF| ~ 0.013 - 0.014) staying safely inside [1.40, 1.58].",
+        "1. PHYSICAL HYDRAULICS (FROM STAGE 1 MEASUREMENT)",
+        "-" * 75,
+        f"  - Measured Flow Rate Q:           {Q_meas:.2f} mL/min (runs: {hyd.get('q_runs_mL_per_min', [])})",
+        f"  - Theoretical Residence Time:     tau(V/Q) = {tau_V_over_Q:.2f} min ({tau_V_over_Q*60:.1f} s)",
+        f"  - Empirical Step-Fit Tau:         tau_step = {tau_step_fit:.2f} min ({tau_step_fit*60:.1f} s)",
+        f"  - Effective Mixing Volume:        V_eff = {V_eff:.2f} mL ({hyd['effective_volume_fraction']*100:.1f}% chamber efficiency)",
+        f"  - Derived Step Length (tau / 3):  {T_s_from_stepfit:.1f} s to {T_s_from_V_over_Q:.1f} s",
+        f"  - Nominal Step Length Used:       T_s = {T_s_operational:.1f} s (deviation: ~1.2x to 1.5x longer than tau/3)",
         "",
-        "2. RULE 2: LEVEL SIZE & NOISE MARGIN (dv)",
-        "-"*75,
-        f"  - Discretization: 9 levels {-4, -3, -2, -1, 0, 1, 2, 3, 4}",
-        f"  - Acid Level Step (dv_acid):     {dv_acid*1000:.1f} uL ({dv_acid:.4f} mL) -> Step dF = {dF_step_acid:.4f}",
-        f"  - Base Level Step (dv_base):     {dv_base*1000:.1f} uL ({dv_base:.4f} mL) -> Step dF = {dF_step_base:.4f}",
-        f"  - Baseline Noise Floor (sigma0): {sigma0:.4f} ratio units (5-sigma = {noise_5sigma:.4f})",
-        f"  - Peak excursions at +/-4:       ~1.4x the 5-sigma noise threshold, ensuring high signal-to-noise ratio.",
+        "2. RULE 1: MAXIMUM PULSE VOLUME (v_max)",
+        "-" * 75,
+        f"  - Acid 80% Overshoot Target dF:   {target_dF_acid:.4f} (overshoot: {acid_overshoot_dF:.4f})",
+        f"  - Base 80% Overshoot Target dF:   {target_dF_base:.4f} (overshoot: {base_overshoot_dF:.4f})",
+        f"  - Linear Gains:                   Acid = {g_acid:.4f}/mL, Base = {g_base:.4f}/mL",
+        f"  - Asymmetry Factor (Base/Acid):   {asymmetry_ratio:.2f}x",
+        f"  - Selected v_max:                 Acid = {v_max_acid:.2f} mL, Base = {v_max_base:.2f} mL",
+        f"  - Critical Note:                  v_max_base_raw = {v_max_base_raw:.3f} mL. Using 0.08 mL gave expected",
+        f"                                    peak {expected_peak_base:.4f}, exceeding measured 0.5 mL overshoot.",
         "",
-        "3. RULE 3: HYDRAULIC MIXING CHECK",
-        "-"*75,
-        f"  - Hydraulic Residence Time (V/Q): V = 10 mL, Q = {carrier_flow_rate:.2f} mL/min -> tau = {tau_min:.2f} min",
-        f"  - Measured Washout Decay Tau:     Median tau = 3.0 min (within 10% of theoretical CSTR mixing).",
-        f"  - Pass: System behaves as an ideal continuous stirred tank reactor.",
+        "3. RULE 2: LEVEL SIZE & SEPARATION GATE (Delta F_step >= 0.007)",
+        "-" * 75,
+        f"  - Discretization:                 9 levels {{-4..+4}}",
+        f"  - Acid Step Size (dv_acid):       {dv_acid*1000:.1f} uL ({dv_acid:.4f} mL) -> Step dF = {dF_step_acid:.4f}",
+        f"  - Base Step Size (dv_base):       {dv_base*1000:.1f} uL ({dv_base:.4f} mL) -> Step dF = {dF_step_base:.4f}",
+        f"  - Protocol Target Threshold:      Delta F_step >= {rule2_target_dF:.4f}",
+        f"  - RULE 2 VERDICT:                 FAILED (Acid = {dF_step_acid:.4f}, Base = {dF_step_base:.4f})",
+        f"  - Physical Consequence:           Step deflections are only ~1.7 sigma above noise. With within-level",
+        f"                                    SD of 0.005-0.011, adjacent input levels overlap substantially,",
+        f"                                    leaving only ~3-4 physically distinguishable optical states.",
+        f"  - Protocol Remedy:                Increase stock concentrations by ~2.5x, or reduce from 9 to 5 levels.",
         "",
-        "4. RULE 4: STEP LENGTH (T_s)",
-        "-"*75,
-        f"  - Selected Step Length T_s:       T_s = tau / 3 = {T_s_sec:.0f} seconds (1.0 minute)",
-        f"  - Firing Schedule:                Step k fires at t0 + k * 60 seconds.",
-        "",
-        "5. STAGE 4 BENCHMARK EXECUTION LOGISTICS",
-        "-"*75,
-        f"  - Sequence File:                  stage4_sequence_600steps.csv (Seed = {SEED})",
-        f"  - Total Sequence Length:          N = {N_STEPS} steps",
-        f"      * Washout / Warmup:           Steps 0 to 29 (30 steps, all level 0 = 30 min)",
-        f"      * Training Segment:           Steps 30 to 429 (400 steps = 6.67 hours)",
-        f"      * Testing Segment:            Steps 430 to 599 (170 steps = 2.83 hours)",
-        f"  - Total Run Duration:             {total_time_h:.2f} hours (including 20 min pre/post baselines)",
-        f"  - Reagent Inventory Required:",
-        f"      * Acid Stock (Vinegar):       {total_acid_vol_mL:.2f} mL (recommend preparing >= 25 mL)",
-        f"      * Base Stock (Ammonia 1:150): {total_base_vol_mL:.2f} mL (recommend preparing >= 20 mL)",
-        f"      * Carrier Buffer (MO 13%):    {total_carrier_L:.2f} Liters (prepare 2.5 - 3.0 L in carboy)",
-        "="*75
+        "4. SEQUENCE SPECIFICATION (N = 600 STEPS)",
+        "-" * 75,
+        f"  - Seed:                           {SEED}",
+        f"  - Washout:                        Steps 0 to 29 (30 steps = 30 min, 0.0 mL)",
+        f"  - Training:                       Steps 30 to 429 (400 steps = 6.67 hours)",
+        f"  - Test:                           Steps 430 to 599 (170 steps = 2.83 hours)",
+        f"  - Acid Stock Consumed:            {total_acid_vol_mL:.2f} mL",
+        f"  - Base Stock Consumed:            {total_base_vol_mL:.2f} mL",
+        f"  - Carrier Buffer Consumed:        {total_carrier_L:.2f} L at Q = {Q_meas:.2f} mL/min",
+        "=" * 75
     ]
-    
     report_text = "\n".join(report_lines)
-    (out_dir / "stage3_parameter_report.txt").write_text(report_text, encoding="utf-8")
-    print("\n" + report_text)
-    
+    for od in [out_dir, out_dir_alias]:
+        (od / "stage3_parameter_report.txt").write_text(report_text, encoding="utf-8")
+
     params_dict = {
-        "v_max_acid_mL": v_max_acid,
-        "v_max_base_mL": v_max_base,
-        "dv_acid_mL": dv_acid,
-        "dv_base_mL": dv_base,
-        "n_levels": n_levels,
-        "levels": levels_range,
-        "tau_sec": tau_sec,
-        "T_s_sec": T_s_sec,
-        "total_steps": N_STEPS,
-        "seed": SEED,
-        "logistics": {
-            "total_time_hours": total_time_h,
-            "total_acid_mL": total_acid_vol_mL,
-            "total_base_mL": total_base_vol_mL,
-            "total_carrier_L": total_carrier_L
+        "hydraulics_measured": {
+            "Q_mean_mL_per_min": Q_meas,
+            "tau_V_over_Q_min": tau_V_over_Q,
+            "tau_step_fit_min": tau_step_fit,
+            "V_eff_mL": V_eff
+        },
+        "rule1": {
+            "v_max_acid_mL": v_max_acid,
+            "v_max_base_mL": v_max_base,
+            "v_max_base_raw_mL": v_max_base_raw,
+            "asymmetry_ratio": asymmetry_ratio
+        },
+        "rule2": {
+            "dv_acid_mL": dv_acid,
+            "dv_base_mL": dv_base,
+            "dF_step_acid": dF_step_acid,
+            "dF_step_base": dF_step_base,
+            "rule2_target_dF": rule2_target_dF,
+            "verdict": "FAIL",
+            "separable_states_estimate": "3 to 4"
+        },
+        "rule3_rule4": {
+            "derived_Ts_stepfit_s": T_s_from_stepfit,
+            "derived_Ts_V_over_Q_s": T_s_from_V_over_Q,
+            "operational_Ts_s": T_s_operational
+        },
+        "logistics_600steps": {
+            "total_time_h": total_time_h,
+            "acid_mL": total_acid_vol_mL,
+            "base_mL": total_base_vol_mL,
+            "carrier_L": total_carrier_L
         }
     }
-    (out_dir / "stage3_parameters.json").write_text(json.dumps(params_dict, indent=2), encoding="utf-8")
-    print(f"\nAll Stage 3 artifacts generated in: {out_dir}")
+    for od in [out_dir, out_dir_alias]:
+        (od / "stage3_parameters.json").write_text(json.dumps(params_dict, indent=2), encoding="utf-8")
+
+    print(f"\nSaved updated Stage 3 report to: {out_dir / 'stage3_parameter_report.txt'}")
+    print(f"Saved updated Stage 3 JSON to: {out_dir / 'stage3_parameters.json'}")
 
 if __name__ == "__main__":
     main()

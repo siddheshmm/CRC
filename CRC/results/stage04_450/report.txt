@@ -1,0 +1,57 @@
+STAGE 4 (450-STEP) BENCHMARK REPORT  -  all numbers computed by stage4_450_analysis.py
+========================================================================================
+Steps 450 = 30 washout / 300 train / 120 test; 169 acid (21.75 mL) and 204 base (10.02 mL) pulses; run 9.25 h
+Step period 60.97 +/- 0.65 s; accumulated drift vs 60 s grid at end: 95 s
+Carrier baseline pre 1.4913 (sd 0.0018), end 1.4936 (sd 0.0020); dosing range 1.4742 to 1.5139 (22% of window)
+
+PLAN GATES
+----------------------------------------------------------------------------------------
+[DEVIATION     ] Run length                                     plan: N=600 (30/400/170)         measured: N=450 (30/300/120)
+[PASS          ] Dose compliance                                plan: all pulses, correct pump   measured: 373/373 pulses, 0 sign errors, max vol err 0.0000 mL
+[INFO          ] Step timing                                    plan: Ts = 61 s nominal          measured: mean 60.97 s (SD 0.65); end drift 95 s
+[PASS          ] Pre-run carrier in gate window                 plan: (1.47, 1.51)               measured: 1.4913
+[PASS          ] Noise SD (pre-run)                             plan: <= 0.002                   measured: 0.0018
+[PASS          ] Pre-run drift                                  plan: <= 0.2 %/10 min            measured: +0.009
+[PASS          ] End-of-run drift                               plan: <= 0.2 %/10 min            measured: -0.030
+[INFO          ] Pre -> post baseline shift                     plan: small vs noise             measured: +0.0023 (+1.2 sigma)
+[PASS          ] Responses inside operating window              plan: (1.4, 1.58)                measured: 1.4742 to 1.5139
+[INFO          ] Window utilisation                             plan: informative                measured: 22% of the allowed range
+[FAIL          ] Level step >= 5 sigma (acid)                   plan: >= 0.0092                  measured: 0.0011
+[FAIL          ] Level step >= 5 sigma (base)                   plan: >= 0.0092                  measured: 0.0014
+[FAIL          ] Decay constant vs V/Q (acid)                   plan: within 20% of 2.50 min     measured: 6.78 min (+171%)
+[FAIL          ] Decay constant vs V/Q (base)                   plan: within 20% of 2.50 min     measured: 5.09 min (+104%)
+[PASS          ] Total MC above shift null (test)               plan: > null 95th                measured: 0.353 vs 0.070 (p=0.003)
+[BELOW         ] Total MC vs plan ballpark                      plan: (2.0, 4.0)                 measured: 0.35
+[BELOW         ] Effective dimension vs plan ballpark           plan: (2.0, 4.0)                 measured: PR 1.31; 1 significant PCs
+[NOT SEPARABLE ] Beats raw-input linear baseline: Degree-2 capacity plan: block-bootstrap CI > 0     measured: diff -0.010 [-0.057, +0.057]
+[BASELINE BETTER] Beats raw-input linear baseline: NARMA-2       plan: block-bootstrap CI > 0     measured: diff -0.523 [-0.583, -0.437]
+[BASELINE BETTER] Beats raw-input linear baseline: NARMA-10      plan: block-bootstrap CI > 0     measured: diff -0.692 [-0.780, -0.570]
+[FAIL          ] Delayed parity k=1 above shift null            plan: bal. acc > null 95th       measured: 0.478 vs 0.571 (p=0.662, n=85)
+[FAIL          ] Delayed parity k=2 above shift null            plan: bal. acc > null 95th       measured: 0.449 vs 0.555 (p=0.935, n=85)
+[FAIL          ] Delayed parity k=3 above shift null            plan: bal. acc > null 95th       measured: 0.438 vs 0.574 (p=0.930, n=85)
+
+MEMORY CAPACITY (test split, shift null)
+----------------------------------------------------------------------------------------
+Total MC (k=1..15) = 0.353; null mean 0.016, 95th 0.070, p = 0.003
+Lags individually above null (p<0.05): [1, 2, 3, 4]
+k=0 (current pulse) R2 = 0.235 (null 95th 0.003)
+Pooled blocked CV over all 420 post-washout steps: MC = 0.437 (null 95th 0.018, p = 0.010)
+Effective dimension (participation ratio) = 1.31; PCs above column-shuffle null = 1
+
+NONLINEAR BENCHMARKS (reservoir vs plan baseline 1, paired moving-block bootstrap on test steps)
+----------------------------------------------------------------------------------------
+Degree-2 capacity    reservoir 0.017  baseline 0.027  diff -0.010 [-0.057, +0.057]  -> no separable difference
+NARMA-2              reservoir 0.750  baseline 0.226  diff -0.523 [-0.583, -0.437]  -> baseline wins
+NARMA-10             reservoir 0.936  baseline 0.244  diff -0.692 [-0.780, -0.570]  -> baseline wins
+Parity k=1: test bal.acc 0.478 (null95 0.571, p 0.662, n=85, majority 0.52); blocked-CV 0.522 (null95 0.547, p 0.254, n=326); raw linear 0.552
+Parity k=2: test bal.acc 0.449 (null95 0.555, p 0.935, n=85, majority 0.51); blocked-CV 0.569 (null95 0.542, p 0.005, n=327); raw linear 0.542
+Parity k=3: test bal.acc 0.438 (null95 0.574, p 0.930, n=85, majority 0.53); blocked-CV 0.511 (null95 0.549, p 0.393, n=328); raw linear 0.571
+
+IMPULSE RESPONSE
+----------------------------------------------------------------------------------------
+acid: peak gain -0.0228 ratio/mL at 20 s, decay tau 6.78 +/- 0.38 min (V/Q = 2.50 min)
+base: peak gain +0.0692 ratio/mL at 10 s, decay tau 5.09 +/- 0.20 min (V/Q = 2.50 min)
+One level step: acid 0.0011, base 0.0014  vs 5 sigma = 0.0092
+Linear FIR model of the ratio (tap 60): R2 train 0.76, test 0.67
+
+FIGURES: fig1_run_overview.png, fig2_system_characterisation.png, fig3_memory_capacity.png, fig4_test_reconstructions.png, fig5_state_space_and_separability.png, fig6_nonlinear_benchmarks.png, fig7_feature_config_ablation.png, fig8_temporal_stability.png

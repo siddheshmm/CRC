@@ -1,0 +1,36 @@
+STAGE 2 – BLOCK B (OVERSHOOT) AND BLOCK C (PAIRED PULSES)
+
+BLOCK B – overshoot
+----------------------------------------------------------------------
+ACID 0.50 mL (n=2): peak change -0.0203 (sd 0.0002, replicate difference 1%); uses 17% of the room to the acid plateau (plateau NOT reached); baseline offset afterwards -0.0003; washout tau 5.4 min; signal/noise 9.4
+   Stage 3 target (80% of the room to the limit) is a change of 0.064; this pulse gives 0.0203, so the reagent would need to be about x3.2 stronger at this volume
+   vs Block A (9 pulses up to 0.20 mL, straight-line fit R2 0.80): Block A gave 0.0132 at 0.20 mL and its line predicts 0.0304 here; measured/predicted = 0.67
+BASE 0.50 mL (n=2): peak change +0.0078 (sd 0.0026, replicate difference 47%); uses 6% of the room to the base plateau (plateau NOT reached); baseline offset afterwards +0.0004; washout tau 1.5 min; signal/noise 3.9
+   Stage 3 target (80% of the room to the limit) is a change of 0.080; this pulse gives 0.0078, so the reagent would need to be about x10.3 stronger at this volume
+   vs Block A (14 pulses up to 0.20 mL, straight-line fit R2 0.89): Block A gave 0.0392 at 0.20 mL and its line predicts 0.1119 here; measured/predicted = 0.07  -> SMALLER than a smaller Block A pulse: reagent strength or pump delivery changed between sessions
+
+BLOCK C – paired pulses
+----------------------------------------------------------------------
+templates from: Block A single pulses (DIFFERENT session: a changed reagent strength appears as a1/a2 far from 1)
+templates: acid 0.05 mL (n=6), acid 0.10 mL (n=6), acid 0.20 mL (n=6), base 0.05 mL (n=4), base 0.10 mL (n=6), base 0.20 mL (n=4)
+
+noise autocorrelation (lag 1, pre-pulse baselines): 0.04
+S2P3_C1_acid_base_1850-1911_IST: acid 0.10 mL → base 0.10 mL, Δt 49 s
+   measured peak 0.0090; plain-sum peak 0.0095; gains a1=1.14±0.27, a2=0.23±0.08
+   residual RMS: plain sum 0.0047 (noise-only 95th pct 0.0020, p=0.000); free gains 0.0022 (p=0.000)
+   -> interaction beyond gain scaling   [template tail extended by a fitted exponential]
+S2P3_C2_acid_acid_1910-1925_IST: acid 0.10 mL → acid 0.10 mL, Δt 75 s
+   measured peak 0.0111; plain-sum peak 0.0096; gains a1=0.37±0.13, a2=1.32±0.13
+   residual RMS: plain sum 0.0021 (noise-only 95th pct 0.0018, p=0.000); free gains 0.0018 (p=0.116)
+   -> interaction beyond gain scaling   [template tail extended by a fitted exponential]
+S2P3_C3_base_acid_1925-1945_IST: base 0.10 mL → acid 0.10 mL, Δt 66 s
+   measured peak 0.0097; plain-sum peak 0.0132; gains a1=0.41±0.05, a2=1.54±0.13
+   residual RMS: plain sum 0.0042 (noise-only 95th pct 0.0022, p=0.000); free gains 0.0020 (p=0.378)
+   -> gain change only (linear once each pulse has its own gain)   [template tail extended by a fitted exponential]
+S2P3_C4_base_base_1945-1955_IST: base 0.10 mL → base 0.10 mL, Δt 52 s
+   measured peak 0.0154; plain-sum peak 0.0222; gains a1=0.36±0.04, a2=0.73±0.03
+   residual RMS: plain sum 0.0053 (noise-only 95th pct 0.0019, p=0.000); free gains 0.0017 (p=0.312)
+   -> gain change only (linear once each pulse has its own gain)
+
+Block C overall: 2 x interaction beyond gain scaling; 2 x gain change only (linear once each pulse has its own gain)
+Each pair was measured once; a single run per pair has no replicate, so only noise-based significance is available

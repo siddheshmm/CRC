@@ -1,76 +1,108 @@
 ===========================================================================
-STAGE 4 BENCHMARK EXECUTIVE REPORT: CHEMICAL RESERVOIR COMPUTING
+STAGE 4 BENCHMARK AUDITED REPORT: CHEMICAL RESERVOIR COMPUTING
 System: Methyl Orange CSTR Reservoir (Acid / Base Bipolar Dosing)
+Audited against Protocol Baselines, Bootstrap CIs, and Statistical Power
 ===========================================================================
 
 1. HYDRAULIC & PHYSICAL AUDIT
   - Total Timesteps: 200 (Washout: 30, Train: 130, Test: 40)
-  - Physical Doses Delivered: 150 non-zero pulses (100% sequence compliance)
+  - Physical Doses Delivered: 150 non-zero pulses (100% compliance)
   - Step Duration (Ts): Mean = 60.83 s (SD = 0.72 s)
   - Acid Delivered: 9.1000 mL vinegar
   - Base Delivered: 3.8200 mL dilute ammonia
-  - Run Window: 2026-10-28 23:15:40.869000 to 2026-10-29 02:07:25.117000
-
-2. CARRIER BUFFER & OPTICAL STABILITY
   - Washout Pre-Dose Baseline: 1.4809 ± 0.0016
-    Target Gate [1.470, 1.510]: PASSED
-  - Dosing Dynamic Range: Min = 1.4655, Max = 1.5159
-    Saturation Bounds [1.400, 1.580]: PASSED
-  - Post-Dosing Recovery: 1.4816 ± 0.0024
+  - Dosing Dynamic Range: 1.4655 to 1.5159
 
-3. BENCHMARK PERFORMANCE ACROSS FEATURE CONFIGURATIONS
+2. STATISTICAL POWER & NULL FLOOR AUDIT
+  - Test Set Size: N_test = 40 steps (planned 170 steps)
+  - Analytical Null Floor (K/N_test = 15/40): 0.3750
+  - AUDIT FINDING: With N_test = 40, the empirical null 95th percentile sits at 0.41 - 0.53.
+    The observed reservoir MC (~0.50) cannot be statistically separated from chance
+    on this 40-step test set alone. Full 170-step holdout (Stage 6) is required.
+
+3. PROTOCOL BASELINE COMPARISONS
+  - Baseline 1 (Ridge on raw delayed inputs u(t..t-15)) NARMA-2 NMSE: 0.2351
+  - Baseline 1 (Ridge on raw delayed inputs u(t..t-3))  NARMA-2 NMSE: 0.2325
+  - Baseline 2 (Trivial mean predictor) NARMA-2 NMSE: 1.0000
+
+4. AUDITED PERFORMANCE ACROSS FEATURE CONFIGURATIONS
   Configuration: Protocol_18Taps_Ratios
     Features: 19 | Effective Dimension (PR): 1.19
-    Total Memory Capacity (k=1..15): 0.4957
-    Null Shuffled Baseline (95th %ile): 0.4089
+    Total Memory Capacity (k=1..15): Pearson sum = 0.4977, Out-of-sample R² sum = 0.3670
+    Baseline 3 Circular Shift Null (95th %ile): 0.6607
+    Statistically Exceeds Null: False
     Lag-1 MC: r2=0.1664 (corr r=0.4079)
     Lag-2 MC: r2=0.0247 (corr r=0.1571)
     Lag-3 MC: r2=0.0951 (corr r=0.3083)
-    Delayed Parity (XOR): Lag-1 = 47.5%, Lag-2 = 57.5%
-    Degree-2 Nonlinear Capacity: Cross = 0.0000, Squared = 0.0000
-    NARMA-2 Test NMSE: 0.7649
+    NARMA-2 NMSE: Reservoir = 0.7334 vs Baseline 1 = 0.2351
+      Paired Bootstrap 95% CI (Baseline - Reservoir): [-0.7356, -0.3597]
+      Baseline Wins: True
+    Delayed Parity (XOR):
+      Lag 1: Accuracy = 42.5%, Majority Rate = 52.5% (Beats Majority: False)
+      Lag 2: Accuracy = 47.5%, Majority Rate = 55.0% (Beats Majority: False)
+      Lag 3: Accuracy = 50.0%, Majority Rate = 72.5% (Beats Majority: False)
 
   Configuration: Ratio555_480_6Taps
     Features: 7 | Effective Dimension (PR): 1.39
-    Total Memory Capacity (k=1..15): 0.5103
-    Null Shuffled Baseline (95th %ile): 0.4760
+    Total Memory Capacity (k=1..15): Pearson sum = 0.5119, Out-of-sample R² sum = 0.3451
+    Baseline 3 Circular Shift Null (95th %ile): 0.7789
+    Statistically Exceeds Null: False
     Lag-1 MC: r2=0.1670 (corr r=0.4086)
     Lag-2 MC: r2=0.0296 (corr r=0.1721)
     Lag-3 MC: r2=0.0982 (corr r=0.3134)
-    Delayed Parity (XOR): Lag-1 = 52.5%, Lag-2 = 60.0%
-    Degree-2 Nonlinear Capacity: Cross = 0.0008, Squared = 0.0000
-    NARMA-2 Test NMSE: 0.7150
+    NARMA-2 NMSE: Reservoir = 0.7196 vs Baseline 1 = 0.2351
+      Paired Bootstrap 95% CI (Baseline - Reservoir): [-0.6790, -0.3639]
+      Baseline Wins: True
+    Delayed Parity (XOR):
+      Lag 1: Accuracy = 45.0%, Majority Rate = 52.5% (Beats Majority: False)
+      Lag 2: Accuracy = 45.0%, Majority Rate = 55.0% (Beats Majority: False)
+      Lag 3: Accuracy = 50.0%, Majority Rate = 72.5% (Beats Majority: False)
 
   Configuration: SingleTap60_8Absorbances
     Features: 9 | Effective Dimension (PR): 3.84
-    Total Memory Capacity (k=1..15): 0.5444
-    Null Shuffled Baseline (95th %ile): 0.4729
+    Total Memory Capacity (k=1..15): Pearson sum = 0.6625, Out-of-sample R² sum = 0.2689
+    Baseline 3 Circular Shift Null (95th %ile): 0.7091
+    Statistically Exceeds Null: False
     Lag-1 MC: r2=0.0618 (corr r=0.2485)
     Lag-2 MC: r2=0.0693 (corr r=0.2632)
     Lag-3 MC: r2=0.0417 (corr r=0.2043)
-    Delayed Parity (XOR): Lag-1 = 47.5%, Lag-2 = 57.5%
-    Degree-2 Nonlinear Capacity: Cross = 0.0000, Squared = 0.0000
-    NARMA-2 Test NMSE: 0.8075
+    NARMA-2 NMSE: Reservoir = 0.7943 vs Baseline 1 = 0.2351
+      Paired Bootstrap 95% CI (Baseline - Reservoir): [-0.7787, -0.4341]
+      Baseline Wins: True
+    Delayed Parity (XOR):
+      Lag 1: Accuracy = 40.0%, Majority Rate = 52.5% (Beats Majority: False)
+      Lag 2: Accuracy = 45.0%, Majority Rate = 55.0% (Beats Majority: False)
+      Lag 3: Accuracy = 45.0%, Majority Rate = 72.5% (Beats Majority: False)
 
   Configuration: SingleTap60_3Ratios
     Features: 4 | Effective Dimension (PR): 1.59
-    Total Memory Capacity (k=1..15): 0.3876
-    Null Shuffled Baseline (95th %ile): 0.5302
+    Total Memory Capacity (k=1..15): Pearson sum = 0.4591, Out-of-sample R² sum = 0.1849
+    Baseline 3 Circular Shift Null (95th %ile): 0.8902
+    Statistically Exceeds Null: False
     Lag-1 MC: r2=0.0701 (corr r=0.2648)
     Lag-2 MC: r2=0.0427 (corr r=0.2066)
     Lag-3 MC: r2=0.0348 (corr r=0.1866)
-    Delayed Parity (XOR): Lag-1 = 47.5%, Lag-2 = 52.5%
-    Degree-2 Nonlinear Capacity: Cross = 0.0048, Squared = 0.0437
-    NARMA-2 Test NMSE: 0.7750
+    NARMA-2 NMSE: Reservoir = 0.7585 vs Baseline 1 = 0.2351
+      Paired Bootstrap 95% CI (Baseline - Reservoir): [-0.7332, -0.3869]
+      Baseline Wins: True
+    Delayed Parity (XOR):
+      Lag 1: Accuracy = 42.5%, Majority Rate = 52.5% (Beats Majority: False)
+      Lag 2: Accuracy = 57.5%, Majority Rate = 55.0% (Beats Majority: True)
+      Lag 3: Accuracy = 25.0%, Majority Rate = 72.5% (Beats Majority: False)
 
   Configuration: Full_MultiTap_Absorbances
     Features: 49 | Effective Dimension (PR): 5.22
-    Total Memory Capacity (k=1..15): 0.5189
-    Null Shuffled Baseline (95th %ile): 0.3640
+    Total Memory Capacity (k=1..15): Pearson sum = 0.5490, Out-of-sample R² sum = 0.4229
+    Baseline 3 Circular Shift Null (95th %ile): 0.5468
+    Statistically Exceeds Null: True
     Lag-1 MC: r2=0.1377 (corr r=0.3711)
     Lag-2 MC: r2=0.0541 (corr r=0.2326)
     Lag-3 MC: r2=0.0875 (corr r=0.2957)
-    Delayed Parity (XOR): Lag-1 = 45.0%, Lag-2 = 55.0%
-    Degree-2 Nonlinear Capacity: Cross = 0.0000, Squared = 0.0000
-    NARMA-2 Test NMSE: 0.8671
+    NARMA-2 NMSE: Reservoir = 0.7384 vs Baseline 1 = 0.2351
+      Paired Bootstrap 95% CI (Baseline - Reservoir): [-0.7955, -0.3713]
+      Baseline Wins: True
+    Delayed Parity (XOR):
+      Lag 1: Accuracy = 37.5%, Majority Rate = 52.5% (Beats Majority: False)
+      Lag 2: Accuracy = 55.0%, Majority Rate = 55.0% (Beats Majority: False)
+      Lag 3: Accuracy = 32.5%, Majority Rate = 72.5% (Beats Majority: False)
 
